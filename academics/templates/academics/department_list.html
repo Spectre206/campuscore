@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Departments</title>
+</head>
+<body>
+    <h1>Departments</h1>
+    <ul>
+        {% for department in departments %}
+            <li>{{ department.name }} ({{ department.code }})</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
