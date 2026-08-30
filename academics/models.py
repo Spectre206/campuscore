@@ -85,3 +85,55 @@ class Enrollment(models.Model):
 
     def __str__(self):
         return f"{self.student.username} in {self.section}"
+
+class AttendanceSession(models.Model):
+    section = models.ForeignKey(
+        Section,
+        on_delete=models.PROTECT,
+        related_name='attendance_sessions'
+    )
+    date = models.DateField()
+    title = models.CharField(max_length=100, blank=True, default='')
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='attendance_sessions_created',
+        limit_choices_to={'role': 'TEACHER'}
+    )
+
+    class Meta:
+        ordering = ['-date']  # latest first
+
+    def __str__(self):
+        return f"{self.section} - {self.date}"
+
+
+class AttendanceRecord(models.Model):
+    class Status(models.TextChoices):
+        PRESENT = 'PRESENT', 'Present'
+        ABSENT = 'ABSENT', 'Absent'
+        LATE = 'LATE', 'Late'
+        EXCUSED = 'EXCUSED', 'Excused'
+
+    session = models.ForeignKey(
+        AttendanceSession,
+        on_delete=models.CASCADE,
+        related_name='records'
+    )
+    enrollment = models.ForeignKey(
+        Enrollment,
+        on_delete=models.CASCADE,
+        related_name='attendance_records'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PRESENT
+    )
+    remarks = models.TextField(blank=True, default='')
+
+    class Meta:
+        unique_together = [('session', 'enrollment')]
+
+    def __str__(self):
+        return f"{self.enrollment.student.username} - {self.status}"

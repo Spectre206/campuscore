@@ -1,7 +1,7 @@
 from rest_framework.test import APITestCase
 from rest_framework import status
 from accounts.models import User
-from academics.models import Department, Program, Course, Section, Enrollment
+from academics.models import Department, Program, Course, Section, Enrollment, AttendanceSession, AttendanceRecord
 
 class BaseAPITestSetup(APITestCase):
     def setUp(self):
@@ -234,3 +234,172 @@ class EnrollmentAPITest(EnrollmentBaseSetup):
         }
         response = self.client.post('/api/enrollments/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+class AttendanceSessionAPITest(EnrollmentBaseSetup):
+    def test_list_sessions_authenticated(self):
+        AttendanceSession.objects.create(section=self.section, date='2026-08-30', created_by=self.teacher)
+        self.client.force_authenticate(user=self.student)
+        response = self.client.get('/api/attendance-sessions/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+    def test_create_session_as_teacher(self):
+        self.client.force_authenticate(user=self.teacher)
+        data = {
+            'section': self.section.id,
+            'date': '2026-08-30',
+            'title': 'Lecture 1',
+            'created_by': self.teacher.id
+        }
+        response = self.client.post('/api/attendance-sessions/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(AttendanceSession.objects.count(), 1)
+
+    def test_create_session_for_other_teacher_section_forbidden(self):
+        other_teacher = User.objects.create_user(username='teacher2', password='pass', role=User.Role.TEACHER)
+        self.client.force_authenticate(user=other_teacher)
+        data = {
+            'section': self.section.id,
+            'date': '2026-08-30',
+            'title': 'Lecture',
+            'created_by': other_teacher.id
+        }
+        response = self.client.post('/api/attendance-sessions/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_session_as_student_forbidden(self):
+        self.client.force_authenticate(user=self.student)
+        data = {
+            'section': self.section.id,
+            'date': '2026-08-30',
+            'created_by': self.teacher.id
+        }
+        response = self.client.post('/api/attendance-sessions/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class AttendanceRecordAPITest(EnrollmentBaseSetup):
+    def setUp(self):
+        super().setUp()
+        self.enrollment = Enrollment.objects.create(section=self.section, student=self.student)
+        self.attendance_session = AttendanceSession.objects.create(
+            section=self.section,
+            date='2026-08-30',
+            created_by=self.teacher
+        )
+
+    def test_create_single_record_as_teacher(self):
+        self.client.force_authenticate(user=self.teacher)
+        data = {
+            'session': self.attendance_session.id,
+            'enrollment': self.enrollment.id,
+            'status': 'PRESENT'
+        }
+        response = self.client.post('/api/attendance-records/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(AttendanceRecord.objects.count(), 1)
+
+    def test_create_bulk_records_as_teacher(self):
+        student2 = User.objects.create_user(username='student2', password='pass', role=User.Role.STUDENT)
+        enrollment2 = Enrollment.objects.create(section=self.section, student=student2)
+        self.client.force_authenticate(user=self.teacher)
+        data = [
+            {
+                'session': self.attendance_session.id,
+                'enrollment': self.enrollment.id,
+                'status': 'PRESENT'
+            },
+            {
+                'session': self.attendance_session.id,
+                'enrollment': enrollment2.id,
+                'status': 'ABSENT'
+            }
+        ]
+        response = self.client.post('/api/attendance-records/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(AttendanceRecord.objects.count(), 2)
+
+    def test_create_record_for_wrong_section_enrollment(self):
+        # Create another section and enrollment
+        other_section = Section.objects.create(
+            course=self.course,
+            teacher=self.teacher,
+            name="B"
+        )
+        other_enrollment = Enrollment.objects.create(section=other_section, student=self.student)
+        self.client.force_authenticate(user=self.teacher)
+        data = {
+            'session': self.attendance_session.id,
+            'enrollment': other_enrollment.id,
+            'status': 'PRESENT'
+        }
+        response = self.client.post('/api/attendance-records/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_duplicate_record_rejected(self):
+        AttendanceRecord.objects.create(
+            session=self.attendance_session,
+            enrollment=self.enrollment,
+            status=AttendanceRecord.Status.PRESENT
+        )
+        self.client.force_authenticate(user=self.teacher)
+        data = {
+            'session': self.attendance_session.id,
+            'enrollment': self.enrollment.id,
+            'status': 'ABSENT'
+        }
+        response = self.client.post('/api/attendance-records/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_record_as_student_forbidden(self):
+        self.client.force_authenticate(user=self.student)
+        data = {
+            'session': self.attendance_session.id,
+            'enrollment': self.enrollment.id,
+            'status': 'PRESENT'
+        }
+        response = self.client.post('/api/attendance-records/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class AttendanceSummaryAPITest(EnrollmentBaseSetup):
+    def setUp(self):
+        super().setUp()
+        self.enrollment = Enrollment.objects.create(section=self.section, student=self.student)
+        # Create two sessions and one present record
+        self.session1 = AttendanceSession.objects.create(section=self.section, date='2026-08-30', created_by=self.teacher)
+        self.session2 = AttendanceSession.objects.create(section=self.section, date='2026-08-31', created_by=self.teacher)
+        AttendanceRecord.objects.create(session=self.session1, enrollment=self.enrollment, status=AttendanceRecord.Status.PRESENT)
+
+    def test_student_can_view_own_summary(self):
+        self.client.force_authenticate(user=self.student)
+        response = self.client.get('/api/attendance-summary/')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        summary = response.data[0]
+        self.assertEqual(summary['total_sessions'], 2)
+        self.assertEqual(summary['present'], 1)
+        self.assertEqual(summary['percentage'], 50.0)
+
+    def test_admin_can_view_student_summary_by_id(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(f'/api/attendance-summary/?student_id={self.student.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+    def test_teacher_can_view_student_summary_by_id(self):
+        self.client.force_authenticate(user=self.teacher)
+        response = self.client.get(f'/api/attendance-summary/?student_id={self.student.id}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+
+    def test_student_cannot_view_other_student_summary(self):
+        other_student = User.objects.create_user(username='other', password='pass', role=User.Role.STUDENT)
+        self.client.force_authenticate(user=self.student)
+        response = self.client.get(f'/api/attendance-summary/?student_id={other_student.id}')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_admin_without_student_id_gets_400(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get('/api/attendance-summary/')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
