@@ -12,12 +12,13 @@ from rest_framework.exceptions import ValidationError
 from accounts.models import User
 from .models import (
     Department, Program, Course, Section, Enrollment,
-    AttendanceSession, AttendanceRecord
+    AttendanceSession, AttendanceRecord, Assessment, Grade
 )
 from .serializers import (
     DepartmentSerializer, ProgramSerializer, CourseSerializer,
     SectionSerializer, EnrollmentSerializer,
-    AttendanceSessionSerializer, AttendanceRecordSerializer
+    AttendanceSessionSerializer, AttendanceRecordSerializer,
+    AssessmentSerializer, GradeSerializer
 )
 from .permissions import IsAdminOrReadOnly, IsAdminOrTeacher
 
@@ -147,5 +148,76 @@ class AttendanceSummaryAPIView(APIView):
                 'total_sessions': total_sessions,
                 'present': present_count,
                 'percentage': round(attendance_percentage, 2)
+            })
+        return Response(summary)
+
+class AssessmentListCreateAPIView(ListCreateAPIView):
+    serializer_class = AssessmentSerializer
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAdminOrTeacher]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == user.Role.TEACHER:
+            return Assessment.objects.filter(section__teacher=user)
+        return Assessment.objects.all()
+
+
+class GradeListCreateAPIView(ListCreateAPIView):
+    serializer_class = GradeSerializer
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAdminOrTeacher]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == user.Role.TEACHER:
+            return Grade.objects.filter(assessment__section__teacher=user)
+        return Grade.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        many = isinstance(request.data, list)
+        serializer = self.get_serializer(data=request.data, many=many)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        with transaction.atomic():
+            serializer.save()
+
+
+class GradeSummaryAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        student_id = request.query_params.get('student_id')
+
+        if user.role == user.Role.STUDENT:
+            if student_id and str(student_id) != str(user.id):
+                return Response({"detail": "You cannot view another student's grades."}, status=403)
+            student_id = user.id
+        elif user.role in [user.Role.ADMIN, user.Role.TEACHER]:
+            if not student_id:
+                return Response({"detail": "student_id query parameter required for admin/teacher."}, status=400)
+        else:
+            return Response({"detail": "Invalid role."}, status=403)
+
+        student = get_object_or_404(User, pk=student_id, role=User.Role.STUDENT)
+        enrollments = Enrollment.objects.filter(student=student)
+        summary = []
+        for enrollment in enrollments:
+            grades = Grade.objects.filter(enrollment=enrollment)
+            total_marks_obtained = sum(g.marks for g in grades)
+            total_possible = sum(g.assessment.total_marks for g in grades)
+            percentage = (total_marks_obtained / total_possible * 100) if total_possible else 0
+            summary.append({
+                'section': enrollment.section.name,
+                'course_code': enrollment.section.course.code,
+                'assessments_count': grades.count(),
+                'total_marks_obtained': total_marks_obtained,
+                'total_possible_marks': total_possible,
+                'percentage': round(percentage, 2)
             })
         return Response(summary)

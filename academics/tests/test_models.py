@@ -1,10 +1,10 @@
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
-from academics.models import Department, Program, Course, Section, Enrollment, AttendanceSession, AttendanceRecord
+from academics.models import Department, Program, Course, Section, Enrollment, AttendanceSession, AttendanceRecord, Assessment, Grade
 from accounts.models import User
 from django.test import TestCase
 from django.db.utils import IntegrityError
-
+from django.core.exceptions import ValidationError
 class DepartmentModelTest(TestCase):
     def test_create_department(self):
         dept = Department.objects.create(name="Computer Science", code="CS")
@@ -145,3 +145,79 @@ class AttendanceRecordModelTest(TestCase):
         AttendanceRecord.objects.create(session=self.session, enrollment=self.enrollment)
         with self.assertRaises(IntegrityError):
             AttendanceRecord.objects.create(session=self.session, enrollment=self.enrollment)
+
+class AssessmentModelTest(TestCase):
+    def setUp(self):
+        self.dept = Department.objects.create(name="CS", code="CS")
+        self.program = Program.objects.create(name="BSCS", code="BSCS", department=self.dept)
+        self.course = Course.objects.create(name="DB", code="DB101", program=self.program)
+        self.teacher = User.objects.create_user(username='teacher1', password='pass', role=User.Role.TEACHER)
+        self.section = Section.objects.create(course=self.course, teacher=self.teacher, name="A")
+
+    def test_create_assessment(self):
+        assessment = Assessment.objects.create(
+            section=self.section,
+            name="Midterm",
+            type=Assessment.Type.EXAM,
+            total_marks=50,
+            date='2026-09-15'
+        )
+        self.assertEqual(assessment.total_marks, 50)
+
+    def test_type_choices(self):
+        assessment = Assessment.objects.create(
+            section=self.section,
+            name="Quiz 1",
+            type="QUIZ",
+            total_marks=10,
+            date='2026-09-01'
+        )
+        self.assertEqual(assessment.type, 'QUIZ')
+
+
+class GradeModelTest(TestCase):
+    def setUp(self):
+        self.dept = Department.objects.create(name="CS", code="CS")
+        self.program = Program.objects.create(name="BSCS", code="BSCS", department=self.dept)
+        self.course = Course.objects.create(name="DB", code="DB101", program=self.program)
+        self.teacher = User.objects.create_user(username='teacher1', password='pass', role=User.Role.TEACHER)
+        self.student = User.objects.create_user(username='student1', password='pass', role=User.Role.STUDENT)
+        self.section = Section.objects.create(course=self.course, teacher=self.teacher, name="A")
+        self.enrollment = Enrollment.objects.create(section=self.section, student=self.student)
+        self.assessment = Assessment.objects.create(
+            section=self.section,
+            name="Midterm",
+            type="EXAM",
+            total_marks=50,
+            date='2026-09-15'
+        )
+
+    def test_create_grade(self):
+        grade = Grade.objects.create(
+            assessment=self.assessment,
+            enrollment=self.enrollment,
+            marks=45
+        )
+        self.assertEqual(grade.marks, 45)
+
+    def test_marks_non_negative_db_constraint(self):
+        with self.assertRaises(IntegrityError):
+            Grade.objects.create(
+                assessment=self.assessment,
+                enrollment=self.enrollment,
+                marks=-5
+            )
+
+    def test_marks_cannot_exceed_total_marks_via_clean(self):
+        grade = Grade(
+            assessment=self.assessment,
+            enrollment=self.enrollment,
+            marks=60  # > total_marks
+        )
+        with self.assertRaises(ValidationError):
+            grade.full_clean()  # calls clean() and checks constraints
+
+    def test_unique_together_assessment_enrollment(self):
+        Grade.objects.create(assessment=self.assessment, enrollment=self.enrollment, marks=40)
+        with self.assertRaises(IntegrityError):
+            Grade.objects.create(assessment=self.assessment, enrollment=self.enrollment, marks=30)
