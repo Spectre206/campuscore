@@ -8,7 +8,10 @@ from .api_views import (
     EnrollmentListCreateAPIView,
     AttendanceSessionListCreateAPIView,
     AttendanceRecordListCreateAPIView,
-    AttendanceSummaryAPIView
+    AttendanceSummaryAPIView,
+    AssessmentListCreateAPIView,
+    GradeListCreateAPIView,
+    GradeSummaryAPIView
 )
 
 urlpatterns = [
@@ -21,4 +24,7 @@ urlpatterns = [
     path('api/attendance-sessions/', AttendanceSessionListCreateAPIView.as_view(), name='api-attendance-session-list'),
     path('api/attendance-records/', AttendanceRecordListCreateAPIView.as_view(), name='api-attendance-record-list'),
     path('api/attendance-summary/', AttendanceSummaryAPIView.as_view(), name='api-attendance-summary'),
+    path('api/assessments/', AssessmentListCreateAPIView.as_view(), name='api-assessment-list'),
+    path('api/grades/', GradeListCreateAPIView.as_view(), name='api-grade-list'),
+    path('api/grade-summary/', GradeSummaryAPIView.as_view(), name='api-grade-summary')
 ]

@@ -1,5 +1,7 @@
 from django.db import models
 from django.conf import settings
+from django.db.models import CheckConstraint, Q
+from django.core.exceptions import ValidationError
 
 class Department(models.Model):
     name = models.CharField(max_length=100)
@@ -137,3 +139,51 @@ class AttendanceRecord(models.Model):
 
     def __str__(self):
         return f"{self.enrollment.student.username} - {self.status}"
+
+class Assessment(models.Model):
+    class Type(models.TextChoices):
+        EXAM = 'EXAM', 'Exam'
+        QUIZ = 'QUIZ', 'Quiz'
+        ASSIGNMENT = 'ASSIGNMENT', 'Assignment'
+        PROJECT = 'PROJECT', 'Project'
+
+    section = models.ForeignKey(
+        Section,
+        on_delete=models.PROTECT,
+        related_name='assessments'
+    )
+    name = models.CharField(max_length=100)
+    type = models.CharField(max_length=20, choices=Type.choices)
+    total_marks = models.PositiveIntegerField()
+    date = models.DateField()
+
+    def __str__(self):
+        return f"{self.name} ({self.section})"
+
+
+class Grade(models.Model):
+    assessment = models.ForeignKey(
+        Assessment,
+        on_delete=models.CASCADE,
+        related_name='grades'
+    )
+    enrollment = models.ForeignKey(
+        Enrollment,
+        on_delete=models.CASCADE,
+        related_name='grades'
+    )
+    marks = models.IntegerField()
+    remarks = models.TextField(blank=True, default='')
+
+    class Meta:
+        unique_together = [('assessment', 'enrollment')]
+        constraints = [
+            CheckConstraint(condition=Q(marks__gte=0), name='grade_marks_non_negative')
+        ]
+
+    def clean(self):
+        if self.marks > self.assessment.total_marks:
+            raise ValidationError({'marks': 'Marks cannot exceed total marks.'})
+
+    def __str__(self):
+        return f"{self.enrollment.student.username} - {self.assessment.name}: {self.marks}"
