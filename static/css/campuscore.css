@@ -1,0 +1,23 @@
+:root {
+    --bs-primary: #14324D;
+    --bs-primary-hover: #1F4A73;
+    --bs-accent: #C99A2E;
+    --bs-success: #2E7D5B;
+    --bs-info: #3E7A91;
+    --bs-warning: #D9A441;
+    --bs-danger: #B23A34;
+
+    --bs-body-bg: #F4F5F7;
+    --bs-body-color: #1F2937;
+    --bs-secondary-color: #5B6472;
+
+    --bs-btn-primary-bg: #14324D;
+    --bs-btn-primary-border: #14324D;
+    --bs-btn-primary-hover-bg: #1F4A73;
+    --bs-btn-primary-hover-border: #1F4A73;
+
+    --bs-navbar-bg: #14324D;
+    --bs-navbar-color: rgba(255,255,255,0.8);
+    --bs-navbar-hover-color: #C99A2E;
+    --bs-navbar-active-color: #C99A2E;
+}
