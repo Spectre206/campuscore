@@ -1,32 +1,54 @@
+# academics/api_views.py
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from rest_framework.generics import ListCreateAPIView
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
-from .models import Department, Program, Course, Section, Enrollment
-from .serializers import DepartmentSerializer, ProgramSerializer, CourseSerializer, SectionSerializer, EnrollmentSerializer
+
+from accounts.models import User
+from .models import (
+    Department, Program, Course, Section, Enrollment,
+    AttendanceSession, AttendanceRecord
+)
+from .serializers import (
+    DepartmentSerializer, ProgramSerializer, CourseSerializer,
+    SectionSerializer, EnrollmentSerializer,
+    AttendanceSessionSerializer, AttendanceRecordSerializer
+)
 from .permissions import IsAdminOrReadOnly, IsAdminOrTeacher
+
 
 class DepartmentListCreateAPIView(ListCreateAPIView):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
-    authentication_classes = [SessionAuthentication, BasicAuthentication]  # optional; DRF default includes these
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAdminOrReadOnly]
+
 
 class ProgramListCreateAPIView(ListCreateAPIView):
     queryset = Program.objects.all()
     serializer_class = ProgramSerializer
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAdminOrReadOnly]
+
 
 class CourseListCreateAPIView(ListCreateAPIView):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAdminOrReadOnly]
+
 
 class SectionListCreateAPIView(ListCreateAPIView):
     queryset = Section.objects.all()
     serializer_class = SectionSerializer
     authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAdminOrTeacher]
+
 
 class EnrollmentListCreateAPIView(ListCreateAPIView):
     serializer_class = EnrollmentSerializer
@@ -43,19 +65,87 @@ class EnrollmentListCreateAPIView(ListCreateAPIView):
         section = serializer.validated_data['section']
         student = serializer.validated_data['student']
 
-        # Use transaction with select_for_update to prevent race conditions
         with transaction.atomic():
-            # Lock the section row to safely check capacity and duplicates
             locked_section = Section.objects.select_for_update().get(pk=section.pk)
-
-            # Check duplicate enrollment
             if Enrollment.objects.filter(section=locked_section, student=student).exists():
                 raise ValidationError({"detail": "Student is already enrolled in this section."})
-
-            # Check capacity (if not None)
             if locked_section.capacity is not None:
                 enrolled_count = Enrollment.objects.filter(section=locked_section, status='ACTIVE').count()
                 if enrolled_count >= locked_section.capacity:
                     raise ValidationError({"detail": "Section capacity exceeded."})
-
             serializer.save()
+
+
+class AttendanceSessionListCreateAPIView(ListCreateAPIView):
+    queryset = AttendanceSession.objects.all()
+    serializer_class = AttendanceSessionSerializer
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAdminOrTeacher]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == user.Role.TEACHER:
+            return AttendanceSession.objects.filter(section__teacher=user)
+        return AttendanceSession.objects.all()
+
+
+class AttendanceRecordListCreateAPIView(ListCreateAPIView):
+    serializer_class = AttendanceRecordSerializer
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAdminOrTeacher]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == user.Role.TEACHER:
+            return AttendanceRecord.objects.filter(session__section__teacher=user)
+        return AttendanceRecord.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        many = isinstance(request.data, list)
+        serializer = self.get_serializer(data=request.data, many=many)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        with transaction.atomic():
+            serializer.save()
+
+
+class AttendanceSummaryAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        student_id = request.query_params.get('student_id')
+
+        if user.role == user.Role.STUDENT:
+            if student_id and str(student_id) != str(user.id):
+                return Response({"detail": "You cannot view another student's summary."}, status=403)
+            student_id = user.id
+        elif user.role in [user.Role.ADMIN, user.Role.TEACHER]:
+            if not student_id:
+                return Response({"detail": "student_id query parameter required for admin/teacher."}, status=400)
+        else:
+            return Response({"detail": "Invalid role."}, status=403)
+
+        student = get_object_or_404(User, pk=student_id, role=User.Role.STUDENT)
+        enrollments = Enrollment.objects.filter(student=student)
+        summary = []
+        for enrollment in enrollments:
+            sessions = AttendanceSession.objects.filter(section=enrollment.section)
+            total_sessions = sessions.count()
+            present_count = AttendanceRecord.objects.filter(
+                enrollment=enrollment,
+                status=AttendanceRecord.Status.PRESENT
+            ).count()
+            attendance_percentage = (present_count / total_sessions * 100) if total_sessions else 0
+            summary.append({
+                'section': enrollment.section.name,
+                'course_code': enrollment.section.course.code,
+                'total_sessions': total_sessions,
+                'present': present_count,
+                'percentage': round(attendance_percentage, 2)
+            })
+        return Response(summary)

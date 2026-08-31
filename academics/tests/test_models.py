@@ -1,6 +1,6 @@
 from django.db import transaction
 from django.db.models.deletion import ProtectedError
-from academics.models import Department, Program, Course, Section, Enrollment
+from academics.models import Department, Program, Course, Section, Enrollment, AttendanceSession, AttendanceRecord
 from accounts.models import User
 from django.test import TestCase
 from django.db.utils import IntegrityError
@@ -102,3 +102,46 @@ class EnrollmentModelTest(TestCase):
         Enrollment.objects.create(section=self.section, student=self.student)
         with self.assertRaises(IntegrityError):
             Enrollment.objects.create(section=self.section, student=self.student)
+
+class AttendanceSessionModelTest(TestCase):
+    def setUp(self):
+        self.dept = Department.objects.create(name="CS", code="CS")
+        self.program = Program.objects.create(name="BSCS", code="BSCS", department=self.dept)
+        self.course = Course.objects.create(name="DB", code="DB101", program=self.program)
+        self.teacher = User.objects.create_user(username='teacher1', password='pass', role=User.Role.TEACHER)
+        self.section = Section.objects.create(course=self.course, teacher=self.teacher, name="A")
+
+    def test_create_session(self):
+        session = AttendanceSession.objects.create(
+            section=self.section,
+            date='2026-08-30',
+            title='Lecture 1',
+            created_by=self.teacher
+        )
+        self.assertEqual(session.section, self.section)
+        self.assertEqual(session.title, 'Lecture 1')
+
+
+class AttendanceRecordModelTest(TestCase):
+    def setUp(self):
+        self.dept = Department.objects.create(name="CS", code="CS")
+        self.program = Program.objects.create(name="BSCS", code="BSCS", department=self.dept)
+        self.course = Course.objects.create(name="DB", code="DB101", program=self.program)
+        self.teacher = User.objects.create_user(username='teacher1', password='pass', role=User.Role.TEACHER)
+        self.student = User.objects.create_user(username='student1', password='pass', role=User.Role.STUDENT)
+        self.section = Section.objects.create(course=self.course, teacher=self.teacher, name="A")
+        self.enrollment = Enrollment.objects.create(section=self.section, student=self.student)
+        self.session = AttendanceSession.objects.create(section=self.section, date='2026-08-30', created_by=self.teacher)
+
+    def test_create_record(self):
+        record = AttendanceRecord.objects.create(
+            session=self.session,
+            enrollment=self.enrollment,
+            status=AttendanceRecord.Status.PRESENT
+        )
+        self.assertEqual(record.status, AttendanceRecord.Status.PRESENT)
+
+    def test_unique_together_session_enrollment(self):
+        AttendanceRecord.objects.create(session=self.session, enrollment=self.enrollment)
+        with self.assertRaises(IntegrityError):
+            AttendanceRecord.objects.create(session=self.session, enrollment=self.enrollment)

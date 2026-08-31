@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Department, Program, Course, Section, Enrollment
+from .models import Department, Program, Course, Section, Enrollment, AttendanceSession, AttendanceRecord
 
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -48,3 +48,36 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         if value.role != 'STUDENT':
             raise serializers.ValidationError("Enrolled user must have role 'STUDENT'.")
         return value
+
+class AttendanceSessionSerializer(serializers.ModelSerializer):
+    section_name = serializers.CharField(source='section.name', read_only=True)
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+
+    class Meta:
+        model = AttendanceSession
+        fields = ['id', 'section', 'section_name', 'date', 'title', 'created_by', 'created_by_username']
+
+    def validate_section(self, value):
+        request = self.context.get('request')
+        if request and request.user.role == request.user.Role.TEACHER:
+            # Teacher can only create sessions for sections they teach
+            if not Section.objects.filter(pk=value.pk, teacher=request.user).exists():
+                raise serializers.ValidationError("You can only create sessions for your own sections.")
+        return value
+
+
+class AttendanceRecordSerializer(serializers.ModelSerializer):
+    session_section = serializers.CharField(source='session.section.name', read_only=True)
+    student_username = serializers.CharField(source='enrollment.student.username', read_only=True)
+
+    class Meta:
+        model = AttendanceRecord
+        fields = ['id', 'session', 'session_section', 'enrollment', 'student_username', 'status', 'remarks']
+
+    def validate(self, data):
+        session = data.get('session')
+        enrollment = data.get('enrollment')
+        if session and enrollment:
+            if enrollment.section_id != session.section_id:
+                raise serializers.ValidationError("Enrollment does not belong to the session's section.")
+        return data

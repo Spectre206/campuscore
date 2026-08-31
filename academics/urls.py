@@ -6,6 +6,9 @@ from .api_views import (
     CourseListCreateAPIView,
     SectionListCreateAPIView,
     EnrollmentListCreateAPIView,
+    AttendanceSessionListCreateAPIView,
+    AttendanceRecordListCreateAPIView,
+    AttendanceSummaryAPIView
 )
 
 urlpatterns = [
@@ -15,4 +18,7 @@ urlpatterns = [
     path('api/courses/', CourseListCreateAPIView.as_view(), name='api-course-list'),
     path('api/sections/', SectionListCreateAPIView.as_view(), name='api-section-list'),
     path('api/enrollments/', EnrollmentListCreateAPIView.as_view(), name='api-enrollment-list'),
+    path('api/attendance-sessions/', AttendanceSessionListCreateAPIView.as_view(), name='api-attendance-session-list'),
+    path('api/attendance-records/', AttendanceRecordListCreateAPIView.as_view(), name='api-attendance-record-list'),
+    path('api/attendance-summary/', AttendanceSummaryAPIView.as_view(), name='api-attendance-summary'),
 ]
