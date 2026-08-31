@@ -1,0 +1,56 @@
+<div class="card shadow-sm">
+    <div class="card-body">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Code</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for department in departments %}
+                    <tr>
+                        <td>{{ department.name }}</td>
+                        <td><span class="badge bg-primary">{{ department.code }}</span></td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="2" class="text-center text-muted">No departments found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if departments.has_other_pages %}
+        <nav>
+            <ul class="pagination justify-content-center mb-0">
+                {% if departments.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="#"
+                           hx-get="{% url 'department-list' %}?page={{ departments.previous_page_number }}&q={{ query }}"
+                           hx-target="#department-table"
+                           hx-push-url="true">Previous</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                {% endif %}
+
+                <li class="page-item disabled">
+                    <span class="page-link">Page {{ departments.number }} of {{ departments.paginator.num_pages }}</span>
+                </li>
+
+                {% if departments.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="#"
+                           hx-get="{% url 'department-list' %}?page={{ departments.next_page_number }}&q={{ query }}"
+                           hx-target="#department-table"
+                           hx-push-url="true">Next</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>

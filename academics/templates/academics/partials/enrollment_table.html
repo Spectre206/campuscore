@@ -1,0 +1,58 @@
+<div class="card shadow-sm">
+    <div class="card-body">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Section</th>
+                    <th>Course</th>
+                    <th>Status</th>
+                    <th>Enrolled At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for enrollment in enrollments %}
+                    <tr>
+                        <td>{{ enrollment.section.name }}</td>
+                        <td>{{ enrollment.section.course.code }} - {{ enrollment.section.course.name }}</td>
+                        <td><span class="badge bg-success">{{ enrollment.get_status_display }}</span></td>
+                        <td>{{ enrollment.enrolled_at|date:"M d, Y" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">No enrollments found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if enrollments.has_other_pages %}
+        <nav>
+            <ul class="pagination justify-content-center mb-0">
+                {% if enrollments.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="#"
+                           hx-get="{% url 'student-enrollment-list' %}?page={{ enrollments.previous_page_number }}&q={{ query }}"
+                           hx-target="#enrollment-table"
+                           hx-push-url="true">Previous</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                {% endif %}
+                <li class="page-item disabled">
+                    <span class="page-link">Page {{ enrollments.number }} of {{ enrollments.paginator.num_pages }}</span>
+                </li>
+                {% if enrollments.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="#"
+                           hx-get="{% url 'student-enrollment-list' %}?page={{ enrollments.next_page_number }}&q={{ query }}"
+                           hx-target="#enrollment-table"
+                           hx-push-url="true">Next</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>

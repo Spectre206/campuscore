@@ -1,12 +1,34 @@
-<!DOCTYPE html>
-<html>
-<head><title>Admin Dashboard</title></head>
-<body>
-  <h1>Admin Dashboard</h1>
-  <p>Welcome, {{ request.user.username }}.</p>
-  <form method="post" action="{% url 'logout' %}">
-    {% csrf_token %}
-    <button type="submit">Logout</button>
-  </form>
-</body>
-</html>
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<h1 class="mb-4">Admin Dashboard</h1>
+<div class="row">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Departments</h5>
+                <p class="card-text">Manage academic departments.</p>
+                <a href="{% url 'department-list' %}" class="btn btn-light">View</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Users</h5>
+                <p class="card-text">Manage users and roles.</p>
+                <a href="/admin/accounts/user/" class="btn btn-light">View</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Attendance</h5>
+                <p class="card-text">View attendance sessions.</p>
+                <a href="#" class="btn btn-light">Soon</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

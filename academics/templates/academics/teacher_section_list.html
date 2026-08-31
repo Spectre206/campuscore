@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}My Sections{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>My Sections</h1>
+    <input type="search" name="q" value="{{ query }}" placeholder="Search..."
+           class="form-control w-auto"
+           hx-get="{% url 'teacher-section-list' %}"
+           hx-target="#section-table"
+           hx-trigger="keyup changed delay:500ms"
+           hx-push-url="true">
+</div>
+<div id="section-table">
+    {% include "academics/partials/section_table.html" %}
+</div>
+{% endblock %}

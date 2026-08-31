@@ -1,14 +1,22 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Departments</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}Departments{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
     <h1>Departments</h1>
-    <ul>
-        {% for department in departments %}
-            <li>{{ department.name }} ({{ department.code }})</li>
-        {% endfor %}
-    </ul>
-</body>
-</html>
+    <div class="d-flex gap-2 align-items-center">
+        <input type="search" name="q" value="{{ query }}" placeholder="Search name or code..."
+               class="form-control"
+               hx-get="{% url 'department-list' %}"
+               hx-target="#department-table"
+               hx-trigger="keyup changed delay:500ms"
+               hx-push-url="true">
+        <a href="{% url 'admin:academics_department_add' %}" class="btn btn-primary text-nowrap">
+            <i class="bi bi-plus-lg"></i> Add Department
+        </a>
+    </div>
+</div>
+
+<div id="department-table">
+    {% include "academics/partials/department_table.html" %}
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}My Enrollments{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>My Enrollments</h1>
+    <input type="search" name="q" value="{{ query }}" placeholder="Search..."
+           class="form-control w-auto"
+           hx-get="{% url 'student-enrollment-list' %}"
+           hx-target="#enrollment-table"
+           hx-trigger="keyup changed delay:500ms"
+           hx-push-url="true">
+</div>
+<div id="enrollment-table">
+    {% include "academics/partials/enrollment_table.html" %}
+</div>
+{% endblock %}
