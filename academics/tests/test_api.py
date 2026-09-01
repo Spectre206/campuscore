@@ -235,6 +235,20 @@ class EnrollmentAPITest(EnrollmentBaseSetup):
         response = self.client.post('/api/enrollments/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_enrollment_creates_notification_for_student(self):
+        self.client.force_authenticate(user=self.admin)
+        data = {
+            'section': self.section.id,
+            'student': self.student.id,
+        }
+        response = self.client.post('/api/enrollments/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # Check notification
+        from notifications.models import Notification
+        notif = Notification.objects.filter(recipient=self.student).first()
+        self.assertIsNotNone(notif)
+        self.assertEqual(notif.title, "Enrollment Successful")
+
 class AttendanceSessionAPITest(EnrollmentBaseSetup):
     def test_list_sessions_authenticated(self):
         AttendanceSession.objects.create(section=self.section, date='2026-08-30', created_by=self.teacher)
@@ -522,6 +536,21 @@ class GradeAPITest(EnrollmentBaseSetup):
         }
         response = self.client.post('/api/grades/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_grade_creates_notification_for_student(self):
+        self.client.force_authenticate(user=self.teacher)
+        data = {
+            'assessment': self.assessment.id,
+            'enrollment': self.enrollment.id,
+            'marks': 45
+        }
+        response = self.client.post('/api/grades/', data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # Check notification
+        from notifications.models import Notification
+        notif = Notification.objects.filter(recipient=self.student).first()
+        self.assertIsNotNone(notif)
+        self.assertEqual(notif.title, "Grade Posted")
 
 
 class GradeSummaryAPITest(EnrollmentBaseSetup):

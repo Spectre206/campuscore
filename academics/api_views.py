@@ -9,6 +9,7 @@ from rest_framework.authentication import SessionAuthentication, BasicAuthentica
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
 
+
 from accounts.models import User
 from .models import (
     Department, Program, Course, Section, Enrollment,

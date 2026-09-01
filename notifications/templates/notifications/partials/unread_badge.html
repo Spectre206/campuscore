@@ -1,0 +1,10 @@
+<span id="notification-badge" hx-get="{% url 'unread-count' %}" hx-trigger="every 30s" hx-swap="outerHTML">
+    <a class="nav-link position-relative" href="{% url 'notification-list' %}">
+        <i class="bi bi-bell"></i>
+        {% if unread_count > 0 %}
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            {{ unread_count }}
+        </span>
+        {% endif %}
+    </a>
+</span>
