@@ -35,55 +35,32 @@
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     {% if user.is_authenticated %}
                         {% if user.role == 'ADMIN' %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'department-list' %}">Departments</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="/admin/">Admin</a>
-                            </li>
-                            <!-- Add more admin links later -->
-
+                            <li class="nav-item"><a class="nav-link" href="{% url 'department-list' %}">Departments</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/admin/">Admin</a></li>
                         {% elif user.role == 'TEACHER' %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">My Sections</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Attendance</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Assessments</a>
-                            </li>
-
+                            <li class="nav-item"><a class="nav-link" href="{% url 'teacher-section-list' %}">My Sections</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#">Attendance</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#">Assessments</a></li>
                         {% elif user.role == 'STUDENT' %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">My Enrollments</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Attendance</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="#">Grades</a>
-                            </li>
+                            <li class="nav-item"><a class="nav-link" href="{% url 'student-enrollment-list' %}">My Enrollments</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#">Attendance</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#">Grades</a></li>
                         {% endif %}
                     {% endif %}
                 </ul>
 
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
                     {% if user.is_authenticated %}
+                        <li class="nav-item me-2">
+                            {% include "notifications/partials/unread_badge.html" %}
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                                 {{ user.username }} ({{ user.get_role_display }})
                             </a>
-
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <a class="dropdown-item" href="#">Profile</a>
-                                </li>
-
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-
+                                <li><a class="dropdown-item" href="#">Profile</a></li>
+                                <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="post" action="{% url 'logout' %}">
                                         {% csrf_token %}
@@ -93,9 +70,7 @@
                             </ul>
                         </li>
                     {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">Login</a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
                     {% endif %}
                 </ul>
             </div>
@@ -122,7 +97,7 @@
     <!-- Footer -->
     <footer class="py-3 bg-light text-center text-muted">
         <div class="container">
-            <span>CampusCore v0.7</span>
+            <span>CampusCore v0.8</span>
         </div>
     </footer>
 
@@ -132,4 +107,3 @@
     {% block extra_js %}{% endblock %}
 </body>
 </html>
-
