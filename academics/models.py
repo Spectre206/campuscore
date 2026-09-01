@@ -7,6 +7,9 @@ class Department(models.Model):
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=10, unique=True)
 
+    class Meta:
+        ordering = ['id']
+       
     def __str__(self):
         return self.name
 
@@ -18,6 +21,8 @@ class Program(models.Model):
         on_delete=models.PROTECT,
         related_name='programs'
     )
+    class Meta:
+        ordering = ['id']
 
     def __str__(self):
         return self.name
@@ -31,6 +36,9 @@ class Course(models.Model):
         on_delete=models.PROTECT,
         related_name='courses'
     )
+
+    class Meta:
+        ordering = ['id']
 
     def __str__(self):
         return self.name
@@ -52,8 +60,8 @@ class Section(models.Model):
     is_active = models.BooleanField(default=True)
 
     class Meta:
+        ordering = ['id']
         unique_together = [('course', 'name')]
-
     def __str__(self):
         return f"{self.course.code} - {self.name}"
 
@@ -83,6 +91,7 @@ class Enrollment(models.Model):
     enrolled_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        ordering = ['id']
         unique_together = [('section', 'student')]
 
     def __str__(self):
@@ -135,8 +144,8 @@ class AttendanceRecord(models.Model):
     remarks = models.TextField(blank=True, default='')
 
     class Meta:
+        ordering = ['id']
         unique_together = [('session', 'enrollment')]
-
     def __str__(self):
         return f"{self.enrollment.student.username} - {self.status}"
 
@@ -157,6 +166,9 @@ class Assessment(models.Model):
     total_marks = models.PositiveIntegerField()
     date = models.DateField()
 
+    class Meta:
+        ordering = ['id']
+
     def __str__(self):
         return f"{self.name} ({self.section})"
 
@@ -176,6 +188,7 @@ class Grade(models.Model):
     remarks = models.TextField(blank=True, default='')
 
     class Meta:
+        ordering = ['id']
         unique_together = [('assessment', 'enrollment')]
         constraints = [
             CheckConstraint(condition=Q(marks__gte=0), name='grade_marks_non_negative')

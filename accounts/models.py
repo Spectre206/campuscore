@@ -12,6 +12,8 @@ class User(AbstractUser):
         choices=Role.choices,
         default=Role.STUDENT,
     )
+    class Meta:
+        ordering = ['id']
 
     def __str__(self):
         return f"{self.username} ({self.role})"

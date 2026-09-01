@@ -118,3 +118,18 @@ class GradeSerializer(serializers.ModelSerializer):
             if marks < 0 or marks > assessment.total_marks:
                 raise serializers.ValidationError({"marks": "Marks must be between 0 and total marks."})
         return data
+
+class AttendanceSummarySerializer(serializers.Serializer):
+    section = serializers.CharField()
+    course_code = serializers.CharField()
+    total_sessions = serializers.IntegerField()
+    present = serializers.IntegerField()
+    percentage = serializers.FloatField()
+
+class GradeSummarySerializer(serializers.Serializer):
+    section = serializers.CharField()
+    course_code = serializers.CharField()
+    assessments_count = serializers.IntegerField()
+    total_marks_obtained = serializers.IntegerField()
+    total_possible_marks = serializers.IntegerField()
+    percentage = serializers.FloatField()

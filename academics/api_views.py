@@ -1,14 +1,14 @@
 # academics/api_views.py
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from rest_framework.generics import ListCreateAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import ValidationError
-
+from rest_framework.viewsets import ModelViewSet
+from drf_spectacular.utils import extend_schema
 
 from accounts.models import User
 from .models import (
@@ -19,43 +19,49 @@ from .serializers import (
     DepartmentSerializer, ProgramSerializer, CourseSerializer,
     SectionSerializer, EnrollmentSerializer,
     AttendanceSessionSerializer, AttendanceRecordSerializer,
-    AssessmentSerializer, GradeSerializer
+    AssessmentSerializer, GradeSerializer,AttendanceSummarySerializer,
+    GradeSummarySerializer,
 )
 from .permissions import IsAdminOrReadOnly, IsAdminOrTeacher
 
 
-class DepartmentListCreateAPIView(ListCreateAPIView):
+class DepartmentViewSet(ModelViewSet):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAdminOrReadOnly]
+    filterset_fields = ['name', 'code']
+    ordering_fields = ['name', 'code', 'id']
 
 
-class ProgramListCreateAPIView(ListCreateAPIView):
+class ProgramViewSet(ModelViewSet):
     queryset = Program.objects.all()
     serializer_class = ProgramSerializer
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAdminOrReadOnly]
+    filterset_fields = ['name', 'code', 'department']
+    ordering_fields = ['name', 'code', 'id']
 
 
-class CourseListCreateAPIView(ListCreateAPIView):
+class CourseViewSet(ModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAdminOrReadOnly]
+    filterset_fields = ['name', 'code', 'program']
+    ordering_fields = ['name', 'code', 'id']
 
 
-class SectionListCreateAPIView(ListCreateAPIView):
+class SectionViewSet(ModelViewSet):
     queryset = Section.objects.all()
     serializer_class = SectionSerializer
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAdminOrTeacher]
+    filterset_fields = ['name', 'course', 'teacher', 'is_active']
+    ordering_fields = ['name', 'id']
 
 
-class EnrollmentListCreateAPIView(ListCreateAPIView):
+class EnrollmentViewSet(ModelViewSet):
     serializer_class = EnrollmentSerializer
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAdminOrTeacher]
+    filterset_fields = ['section', 'student', 'status']
+    ordering_fields = ['enrolled_at', 'id']
 
     def get_queryset(self):
         user = self.request.user
@@ -78,11 +84,11 @@ class EnrollmentListCreateAPIView(ListCreateAPIView):
             serializer.save()
 
 
-class AttendanceSessionListCreateAPIView(ListCreateAPIView):
-    queryset = AttendanceSession.objects.all()
+class AttendanceSessionViewSet(ModelViewSet):
     serializer_class = AttendanceSessionSerializer
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAdminOrTeacher]
+    filterset_fields = ['section', 'date', 'created_by']
+    ordering_fields = ['date', 'id']
 
     def get_queryset(self):
         user = self.request.user
@@ -91,10 +97,11 @@ class AttendanceSessionListCreateAPIView(ListCreateAPIView):
         return AttendanceSession.objects.all()
 
 
-class AttendanceRecordListCreateAPIView(ListCreateAPIView):
+class AttendanceRecordViewSet(ModelViewSet):
     serializer_class = AttendanceRecordSerializer
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAdminOrTeacher]
+    filterset_fields = ['session', 'enrollment', 'status']
+    ordering_fields = ['id']
 
     def get_queryset(self):
         user = self.request.user
@@ -115,8 +122,49 @@ class AttendanceRecordListCreateAPIView(ListCreateAPIView):
             serializer.save()
 
 
+class AssessmentViewSet(ModelViewSet):
+    serializer_class = AssessmentSerializer
+    permission_classes = [IsAdminOrTeacher]
+    filterset_fields = ['section', 'type', 'date']
+    ordering_fields = ['date', 'name', 'id']
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == user.Role.TEACHER:
+            return Assessment.objects.filter(section__teacher=user)
+        return Assessment.objects.all()
+
+
+class GradeViewSet(ModelViewSet):
+    serializer_class = GradeSerializer
+    permission_classes = [IsAdminOrTeacher]
+    filterset_fields = ['assessment', 'enrollment', 'marks']
+    ordering_fields = ['marks', 'id']
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role == user.Role.TEACHER:
+            return Grade.objects.filter(assessment__section__teacher=user)
+        return Grade.objects.all()
+
+    def create(self, request, *args, **kwargs):
+        many = isinstance(request.data, list)
+        serializer = self.get_serializer(data=request.data, many=many)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        with transaction.atomic():
+            serializer.save()
+
+
 class AttendanceSummaryAPIView(APIView):
     permission_classes = [IsAuthenticated]
+    @extend_schema(
+        responses={200: AttendanceSummarySerializer(many=True)}
+)
 
     def get(self, request):
         user = request.user
@@ -152,45 +200,12 @@ class AttendanceSummaryAPIView(APIView):
             })
         return Response(summary)
 
-class AssessmentListCreateAPIView(ListCreateAPIView):
-    serializer_class = AssessmentSerializer
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
-    permission_classes = [IsAdminOrTeacher]
-
-    def get_queryset(self):
-        user = self.request.user
-        if user.role == user.Role.TEACHER:
-            return Assessment.objects.filter(section__teacher=user)
-        return Assessment.objects.all()
-
-
-class GradeListCreateAPIView(ListCreateAPIView):
-    serializer_class = GradeSerializer
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
-    permission_classes = [IsAdminOrTeacher]
-
-    def get_queryset(self):
-        user = self.request.user
-        if user.role == user.Role.TEACHER:
-            return Grade.objects.filter(assessment__section__teacher=user)
-        return Grade.objects.all()
-
-    def create(self, request, *args, **kwargs):
-        many = isinstance(request.data, list)
-        serializer = self.get_serializer(data=request.data, many=many)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
-
-    def perform_create(self, serializer):
-        with transaction.atomic():
-            serializer.save()
-
 
 class GradeSummaryAPIView(APIView):
     permission_classes = [IsAuthenticated]
-
+    @extend_schema(
+        responses={200: GradeSummarySerializer(many=True)}
+)
     def get(self, request):
         user = request.user
         student_id = request.query_params.get('student_id')
