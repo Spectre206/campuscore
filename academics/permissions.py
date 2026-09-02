@@ -1,4 +1,5 @@
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, BasePermission
+
 
 class IsAdminOrReadOnly(BasePermission):
     """
@@ -6,6 +7,7 @@ class IsAdminOrReadOnly(BasePermission):
     Allow write access only to admin users.
     Unauthenticated requests get 403 (Forbidden).
     """
+
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False
@@ -13,11 +15,13 @@ class IsAdminOrReadOnly(BasePermission):
             return True
         return request.user.role == request.user.Role.ADMIN
 
+
 class IsAdminOrTeacher(BasePermission):
     """
     Allow read access to any authenticated user.
     Allow write access to admin or teacher users.
     """
+
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False

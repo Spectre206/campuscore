@@ -1,6 +1,8 @@
 from rest_framework import status
-from academics.tests.base import BaseAPITestSetup
+
 from academics.models import Department
+from academics.tests.base import BaseAPITestSetup
+
 
 class DepartmentAPITest(BaseAPITestSetup):
     def test_list_departments_authenticated(self):
@@ -8,6 +10,7 @@ class DepartmentAPITest(BaseAPITestSetup):
         response = self.client.get('/api/v1/departments/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['count'], 1)
+
     def test_create_department_as_admin(self):
         self.client.force_authenticate(user=self.admin)
         data = {'name': 'Mathematics', 'code': 'MATH'}

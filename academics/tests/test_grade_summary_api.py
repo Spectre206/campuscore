@@ -1,14 +1,20 @@
 from rest_framework import status
+
+from academics.models import Assessment, Enrollment, Grade
 from academics.tests.base import EnrollmentBaseSetup
-from academics.models import Assessment, Grade, Enrollment
 from accounts.models import User
+
 
 class GradeSummaryAPITest(EnrollmentBaseSetup):
     def setUp(self):
         super().setUp()
         self.enrollment = Enrollment.objects.create(section=self.section, student=self.student)
-        self.assessment1 = Assessment.objects.create(section=self.section, name="Quiz", type="QUIZ", total_marks=10, date='2026-09-01')
-        self.assessment2 = Assessment.objects.create(section=self.section, name="Midterm", type="EXAM", total_marks=50, date='2026-09-15')
+        self.assessment1 = Assessment.objects.create(
+            section=self.section, name='Quiz', type='QUIZ', total_marks=10, date='2026-09-01'
+        )
+        self.assessment2 = Assessment.objects.create(
+            section=self.section, name='Midterm', type='EXAM', total_marks=50, date='2026-09-15'
+        )
         Grade.objects.create(assessment=self.assessment1, enrollment=self.enrollment, marks=8)
         Grade.objects.create(assessment=self.assessment2, enrollment=self.enrollment, marks=40)
 
@@ -33,7 +39,9 @@ class GradeSummaryAPITest(EnrollmentBaseSetup):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_student_cannot_view_other_student_summary(self):
-        other_student = User.objects.create_user(username='other', password='pass', role=User.Role.STUDENT)
+        other_student = User.objects.create_user(
+            username='other', password='pass', role=User.Role.STUDENT
+        )
         self.client.force_authenticate(user=self.student)
         response = self.client.get(f'/api/v1/grade-summary/?student_id={other_student.id}')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

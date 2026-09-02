@@ -1,13 +1,15 @@
 from rest_framework import status
-from academics.tests.base import BaseAPITestSetup
+
 from academics.models import Department
+from academics.tests.base import BaseAPITestSetup
+
 
 class DepartmentViewSetTest(BaseAPITestSetup):
     def setUp(self):
         super().setUp()
         # Additional departments for filtering/ordering tests
-        Department.objects.create(name="Mathematics", code="MATH")
-        Department.objects.create(name="Physics", code="PHY")
+        Department.objects.create(name='Mathematics', code='MATH')
+        Department.objects.create(name='Physics', code='PHY')
 
     def test_retrieve_department_as_authenticated(self):
         self.client.force_authenticate(user=self.student)

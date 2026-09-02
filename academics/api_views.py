@@ -1,28 +1,41 @@
 # academics/api_views.py
 from django.db import transaction
 from django.shortcuts import get_object_or_404
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import ValidationError
-from rest_framework.viewsets import ModelViewSet
 from drf_spectacular.utils import extend_schema
+from rest_framework import status
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.viewsets import ModelViewSet
 
 from accounts.models import User
+
 from .models import (
-    Department, Program, Course, Section, Enrollment,
-    AttendanceSession, AttendanceRecord, Assessment, Grade
-)
-from .serializers import (
-    DepartmentSerializer, ProgramSerializer, CourseSerializer,
-    SectionSerializer, EnrollmentSerializer,
-    AttendanceSessionSerializer, AttendanceRecordSerializer,
-    AssessmentSerializer, GradeSerializer,AttendanceSummarySerializer,
-    GradeSummarySerializer,
+    Assessment,
+    AttendanceRecord,
+    AttendanceSession,
+    Course,
+    Department,
+    Enrollment,
+    Grade,
+    Program,
+    Section,
 )
 from .permissions import IsAdminOrReadOnly, IsAdminOrTeacher
+from .serializers import (
+    AssessmentSerializer,
+    AttendanceRecordSerializer,
+    AttendanceSessionSerializer,
+    AttendanceSummarySerializer,
+    CourseSerializer,
+    DepartmentSerializer,
+    EnrollmentSerializer,
+    GradeSerializer,
+    GradeSummarySerializer,
+    ProgramSerializer,
+    SectionSerializer,
+)
 
 
 class DepartmentViewSet(ModelViewSet):
@@ -69,6 +82,7 @@ class EnrollmentViewSet(ModelViewSet):
         if user.role == user.Role.STUDENT:
             queryset = queryset.filter(student=user)
         return queryset
+
     def perform_create(self, serializer):
         section = serializer.validated_data['section']
         student = serializer.validated_data['student']
@@ -76,11 +90,13 @@ class EnrollmentViewSet(ModelViewSet):
         with transaction.atomic():
             locked_section = Section.objects.select_for_update().get(pk=section.pk)
             if Enrollment.objects.filter(section=locked_section, student=student).exists():
-                raise ValidationError({"detail": "Student is already enrolled in this section."})
+                raise ValidationError({'detail': 'Student is already enrolled in this section.'})
             if locked_section.capacity is not None:
-                enrolled_count = Enrollment.objects.filter(section=locked_section, status='ACTIVE').count()
+                enrolled_count = Enrollment.objects.filter(
+                    section=locked_section, status='ACTIVE'
+                ).count()
                 if enrolled_count >= locked_section.capacity:
-                    raise ValidationError({"detail": "Section capacity exceeded."})
+                    raise ValidationError({'detail': 'Section capacity exceeded.'})
             serializer.save()
 
 
@@ -106,7 +122,9 @@ class AttendanceRecordViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = AttendanceRecord.objects.select_related('session__section', 'enrollment__student')
+        queryset = AttendanceRecord.objects.select_related(
+            'session__section', 'enrollment__student'
+        )
         if user.role == user.Role.TEACHER:
             queryset = queryset.filter(session__section__teacher=user)
         return queryset
@@ -166,23 +184,25 @@ class GradeViewSet(ModelViewSet):
 
 class AttendanceSummaryAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    @extend_schema(
-        responses={200: AttendanceSummarySerializer(many=True)}
-)
 
+    @extend_schema(responses={200: AttendanceSummarySerializer(many=True)})
     def get(self, request):
         user = request.user
         student_id = request.query_params.get('student_id')
 
         if user.role == user.Role.STUDENT:
             if student_id and str(student_id) != str(user.id):
-                return Response({"detail": "You cannot view another student's summary."}, status=403)
+                return Response(
+                    {'detail': "You cannot view another student's summary."}, status=403
+                )
             student_id = user.id
         elif user.role in [user.Role.ADMIN, user.Role.TEACHER]:
             if not student_id:
-                return Response({"detail": "student_id query parameter required for admin/teacher."}, status=400)
+                return Response(
+                    {'detail': 'student_id query parameter required for admin/teacher.'}, status=400
+                )
         else:
-            return Response({"detail": "Invalid role."}, status=403)
+            return Response({'detail': 'Invalid role.'}, status=403)
 
         student = get_object_or_404(User, pk=student_id, role=User.Role.STUDENT)
         enrollments = Enrollment.objects.filter(student=student)
@@ -191,38 +211,40 @@ class AttendanceSummaryAPIView(APIView):
             sessions = AttendanceSession.objects.filter(section=enrollment.section)
             total_sessions = sessions.count()
             present_count = AttendanceRecord.objects.filter(
-                enrollment=enrollment,
-                status=AttendanceRecord.Status.PRESENT
+                enrollment=enrollment, status=AttendanceRecord.Status.PRESENT
             ).count()
             attendance_percentage = (present_count / total_sessions * 100) if total_sessions else 0
-            summary.append({
-                'section': enrollment.section.name,
-                'course_code': enrollment.section.course.code,
-                'total_sessions': total_sessions,
-                'present': present_count,
-                'percentage': round(attendance_percentage, 2)
-            })
+            summary.append(
+                {
+                    'section': enrollment.section.name,
+                    'course_code': enrollment.section.course.code,
+                    'total_sessions': total_sessions,
+                    'present': present_count,
+                    'percentage': round(attendance_percentage, 2),
+                }
+            )
         return Response(summary)
 
 
 class GradeSummaryAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    @extend_schema(
-        responses={200: GradeSummarySerializer(many=True)}
-)
+
+    @extend_schema(responses={200: GradeSummarySerializer(many=True)})
     def get(self, request):
         user = request.user
         student_id = request.query_params.get('student_id')
 
         if user.role == user.Role.STUDENT:
             if student_id and str(student_id) != str(user.id):
-                return Response({"detail": "You cannot view another student's grades."}, status=403)
+                return Response({'detail': "You cannot view another student's grades."}, status=403)
             student_id = user.id
         elif user.role in [user.Role.ADMIN, user.Role.TEACHER]:
             if not student_id:
-                return Response({"detail": "student_id query parameter required for admin/teacher."}, status=400)
+                return Response(
+                    {'detail': 'student_id query parameter required for admin/teacher.'}, status=400
+                )
         else:
-            return Response({"detail": "Invalid role."}, status=403)
+            return Response({'detail': 'Invalid role.'}, status=403)
 
         student = get_object_or_404(User, pk=student_id, role=User.Role.STUDENT)
         enrollments = Enrollment.objects.filter(student=student)
@@ -232,12 +254,14 @@ class GradeSummaryAPIView(APIView):
             total_marks_obtained = sum(g.marks for g in grades)
             total_possible = sum(g.assessment.total_marks for g in grades)
             percentage = (total_marks_obtained / total_possible * 100) if total_possible else 0
-            summary.append({
-                'section': enrollment.section.name,
-                'course_code': enrollment.section.course.code,
-                'assessments_count': grades.count(),
-                'total_marks_obtained': total_marks_obtained,
-                'total_possible_marks': total_possible,
-                'percentage': round(percentage, 2)
-            })
+            summary.append(
+                {
+                    'section': enrollment.section.name,
+                    'course_code': enrollment.section.course.code,
+                    'assessments_count': grades.count(),
+                    'total_marks_obtained': total_marks_obtained,
+                    'total_possible_marks': total_possible,
+                    'percentage': round(percentage, 2),
+                }
+            )
         return Response(summary)

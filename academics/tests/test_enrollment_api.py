@@ -1,8 +1,10 @@
 from rest_framework import status
-from academics.tests.base import EnrollmentBaseSetup
+
 from academics.models import Enrollment
-from notifications.models import Notification
+from academics.tests.base import EnrollmentBaseSetup
 from accounts.models import User
+from notifications.models import Notification
+
 
 class EnrollmentAPITest(EnrollmentBaseSetup):
     def test_list_enrollments_as_admin(self):
@@ -13,7 +15,9 @@ class EnrollmentAPITest(EnrollmentBaseSetup):
         self.assertEqual(response.data['count'], 1)
 
     def test_list_enrollments_as_student_shows_only_own(self):
-        other_student = User.objects.create_user(username='other', password='pass', role=User.Role.STUDENT)
+        other_student = User.objects.create_user(
+            username='other', password='pass', role=User.Role.STUDENT
+        )
         Enrollment.objects.create(section=self.section, student=self.student)
         Enrollment.objects.create(section=self.section, student=other_student)
         self.client.force_authenticate(user=self.student)
@@ -37,10 +41,14 @@ class EnrollmentAPITest(EnrollmentBaseSetup):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_capacity_exceeded_rejected(self):
-        student2 = User.objects.create_user(username='student2', password='pass', role=User.Role.STUDENT)
+        student2 = User.objects.create_user(
+            username='student2', password='pass', role=User.Role.STUDENT
+        )
         Enrollment.objects.create(section=self.section, student=self.student)
         Enrollment.objects.create(section=self.section, student=student2)
-        student3 = User.objects.create_user(username='student3', password='pass', role=User.Role.STUDENT)
+        student3 = User.objects.create_user(
+            username='student3', password='pass', role=User.Role.STUDENT
+        )
         self.client.force_authenticate(user=self.admin)
         data = {'section': self.section.id, 'student': student3.id}
         response = self.client.post('/api/v1/enrollments/', data, format='json')

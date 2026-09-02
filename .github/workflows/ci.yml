@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Ruff
+        run: pip install ruff
+      - name: Run Ruff check
+        run: ruff check .
+      - name: Run Ruff format check
+        run: ruff format --check .
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: campuscore
+          POSTGRES_USER: campuscore
+          POSTGRES_PASSWORD: campuscore
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U campuscore -d campuscore"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      SECRET_KEY: github-actions-secret-key
+      DEBUG: 'True'
+      DB_NAME: campuscore
+      DB_USER: campuscore
+      DB_PASSWORD: campuscore
+      DB_HOST: localhost
+      DB_PORT: 5432
+      CELERY_BROKER_URL: redis://localhost:6379/0
+      CELERY_RESULT_BACKEND: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run migrations
+        run: python manage.py migrate
+      - name: Run tests
+        run: python manage.py test
+
+  build:
+    needs: [lint, test]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t campuscore:ci .
