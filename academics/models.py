@@ -83,12 +83,8 @@ class Enrollment(models.Model):
         related_name='enrollments',
         limit_choices_to={'role': 'STUDENT'}
     )
-    status = models.CharField(
-        max_length=20,
-        choices=Status.choices,
-        default=Status.ACTIVE
-    )
-    enrolled_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE, db_index=True)
+    enrolled_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
         ordering = ['id']
@@ -136,11 +132,7 @@ class AttendanceRecord(models.Model):
         on_delete=models.CASCADE,
         related_name='attendance_records'
     )
-    status = models.CharField(
-        max_length=20,
-        choices=Status.choices,
-        default=Status.PRESENT
-    )
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PRESENT, db_index=True)
     remarks = models.TextField(blank=True, default='')
 
     class Meta:
@@ -164,7 +156,7 @@ class Assessment(models.Model):
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=20, choices=Type.choices)
     total_marks = models.PositiveIntegerField()
-    date = models.DateField()
+    date = models.DateField(db_index=True)
 
     class Meta:
         ordering = ['id']
@@ -184,7 +176,7 @@ class Grade(models.Model):
         on_delete=models.CASCADE,
         related_name='grades'
     )
-    marks = models.IntegerField()
+    marks = models.IntegerField(db_index=True)
     remarks = models.TextField(blank=True, default='')
 
     class Meta:
