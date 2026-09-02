@@ -34,7 +34,7 @@ class DepartmentViewSet(ModelViewSet):
 
 
 class ProgramViewSet(ModelViewSet):
-    queryset = Program.objects.all()
+    queryset = Program.objects.select_related('department').all()
     serializer_class = ProgramSerializer
     permission_classes = [IsAdminOrReadOnly]
     filterset_fields = ['name', 'code', 'department']
@@ -42,7 +42,7 @@ class ProgramViewSet(ModelViewSet):
 
 
 class CourseViewSet(ModelViewSet):
-    queryset = Course.objects.all()
+    queryset = Course.objects.select_related('program').all()
     serializer_class = CourseSerializer
     permission_classes = [IsAdminOrReadOnly]
     filterset_fields = ['name', 'code', 'program']
@@ -50,7 +50,7 @@ class CourseViewSet(ModelViewSet):
 
 
 class SectionViewSet(ModelViewSet):
-    queryset = Section.objects.all()
+    queryset = Section.objects.select_related('course', 'teacher').all()
     serializer_class = SectionSerializer
     permission_classes = [IsAdminOrTeacher]
     filterset_fields = ['name', 'course', 'teacher', 'is_active']
@@ -65,10 +65,10 @@ class EnrollmentViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = Enrollment.objects.select_related('section', 'student')
         if user.role == user.Role.STUDENT:
-            return Enrollment.objects.filter(student=user)
-        return Enrollment.objects.all()
-
+            queryset = queryset.filter(student=user)
+        return queryset
     def perform_create(self, serializer):
         section = serializer.validated_data['section']
         student = serializer.validated_data['student']
@@ -92,9 +92,10 @@ class AttendanceSessionViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = AttendanceSession.objects.select_related('section', 'created_by')
         if user.role == user.Role.TEACHER:
-            return AttendanceSession.objects.filter(section__teacher=user)
-        return AttendanceSession.objects.all()
+            queryset = queryset.filter(section__teacher=user)
+        return queryset
 
 
 class AttendanceRecordViewSet(ModelViewSet):
@@ -105,9 +106,10 @@ class AttendanceRecordViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = AttendanceRecord.objects.select_related('session__section', 'enrollment__student')
         if user.role == user.Role.TEACHER:
-            return AttendanceRecord.objects.filter(session__section__teacher=user)
-        return AttendanceRecord.objects.all()
+            queryset = queryset.filter(session__section__teacher=user)
+        return queryset
 
     def create(self, request, *args, **kwargs):
         many = isinstance(request.data, list)
@@ -130,9 +132,10 @@ class AssessmentViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = Assessment.objects.select_related('section')
         if user.role == user.Role.TEACHER:
-            return Assessment.objects.filter(section__teacher=user)
-        return Assessment.objects.all()
+            queryset = queryset.filter(section__teacher=user)
+        return queryset
 
 
 class GradeViewSet(ModelViewSet):
@@ -143,9 +146,10 @@ class GradeViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = Grade.objects.select_related('assessment', 'enrollment__student')
         if user.role == user.Role.TEACHER:
-            return Grade.objects.filter(assessment__section__teacher=user)
-        return Grade.objects.all()
+            queryset = queryset.filter(assessment__section__teacher=user)
+        return queryset
 
     def create(self, request, *args, **kwargs):
         many = isinstance(request.data, list)
