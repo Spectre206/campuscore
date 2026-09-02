@@ -1,14 +1,18 @@
 from rest_framework import status
+
+from academics.models import Assessment, Enrollment, Grade
 from academics.tests.base import EnrollmentBaseSetup
-from academics.models import Assessment, Grade, Enrollment
 from accounts.models import User
 from notifications.models import Notification
+
 
 class GradeAPITest(EnrollmentBaseSetup):
     def setUp(self):
         super().setUp()
         self.enrollment = Enrollment.objects.create(section=self.section, student=self.student)
-        self.assessment = Assessment.objects.create(section=self.section, name="Midterm", type="EXAM", total_marks=50, date='2026-09-15')
+        self.assessment = Assessment.objects.create(
+            section=self.section, name='Midterm', type='EXAM', total_marks=50, date='2026-09-15'
+        )
 
     def test_create_single_grade_as_teacher(self):
         self.client.force_authenticate(user=self.teacher)
@@ -18,11 +22,13 @@ class GradeAPITest(EnrollmentBaseSetup):
         self.assertEqual(Grade.objects.count(), 1)
 
     def test_create_bulk_grades_as_teacher(self):
-        student2 = User.objects.create_user(username='student2', password='pass', role=User.Role.STUDENT)
+        student2 = User.objects.create_user(
+            username='student2', password='pass', role=User.Role.STUDENT
+        )
         enrollment2 = Enrollment.objects.create(section=self.section, student=student2)
         data = [
             {'assessment': self.assessment.id, 'enrollment': self.enrollment.id, 'marks': 40},
-            {'assessment': self.assessment.id, 'enrollment': enrollment2.id, 'marks': 35}
+            {'assessment': self.assessment.id, 'enrollment': enrollment2.id, 'marks': 35},
         ]
         self.client.force_authenticate(user=self.teacher)
         response = self.client.post('/api/v1/grades/', data, format='json')

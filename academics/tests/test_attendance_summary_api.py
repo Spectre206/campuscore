@@ -1,15 +1,25 @@
 from rest_framework import status
-from academics.tests.base import EnrollmentBaseSetup
+
 from academics.models import AttendanceRecord, AttendanceSession, Enrollment
+from academics.tests.base import EnrollmentBaseSetup
 from accounts.models import User
+
 
 class AttendanceSummaryAPITest(EnrollmentBaseSetup):
     def setUp(self):
         super().setUp()
         self.enrollment = Enrollment.objects.create(section=self.section, student=self.student)
-        self.session1 = AttendanceSession.objects.create(section=self.section, date='2026-08-30', created_by=self.teacher)
-        self.session2 = AttendanceSession.objects.create(section=self.section, date='2026-08-31', created_by=self.teacher)
-        AttendanceRecord.objects.create(session=self.session1, enrollment=self.enrollment, status=AttendanceRecord.Status.PRESENT)
+        self.session1 = AttendanceSession.objects.create(
+            section=self.section, date='2026-08-30', created_by=self.teacher
+        )
+        self.session2 = AttendanceSession.objects.create(
+            section=self.section, date='2026-08-31', created_by=self.teacher
+        )
+        AttendanceRecord.objects.create(
+            session=self.session1,
+            enrollment=self.enrollment,
+            status=AttendanceRecord.Status.PRESENT,
+        )
 
     def test_student_can_view_own_summary(self):
         self.client.force_authenticate(user=self.student)
@@ -32,7 +42,9 @@ class AttendanceSummaryAPITest(EnrollmentBaseSetup):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_student_cannot_view_other_student_summary(self):
-        other_student = User.objects.create_user(username='other', password='pass', role=User.Role.STUDENT)
+        other_student = User.objects.create_user(
+            username='other', password='pass', role=User.Role.STUDENT
+        )
         self.client.force_authenticate(user=self.student)
         response = self.client.get(f'/api/v1/attendance-summary/?student_id={other_student.id}')
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)

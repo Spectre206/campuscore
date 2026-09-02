@@ -1,16 +1,27 @@
 from django.test import TestCase
 from django.urls import reverse
+
 from accounts.models import User
+
 
 class AuthenticationViewTest(TestCase):
     def setUp(self):
-        self.admin = User.objects.create_user(username='admin', password='adminpass', role=User.Role.ADMIN)
-        self.teacher = User.objects.create_user(username='teacher', password='teacherpass', role=User.Role.TEACHER)
-        self.student = User.objects.create_user(username='student', password='studentpass', role=User.Role.STUDENT)
+        self.admin = User.objects.create_user(
+            username='admin', password='adminpass', role=User.Role.ADMIN
+        )
+        self.teacher = User.objects.create_user(
+            username='teacher', password='teacherpass', role=User.Role.TEACHER
+        )
+        self.student = User.objects.create_user(
+            username='student', password='studentpass', role=User.Role.STUDENT
+        )
 
     def test_login_redirects_to_home(self):
-        response = self.client.post(reverse('login'), {'username': 'admin', 'password': 'adminpass'})
+        response = self.client.post(
+            reverse('login'), {'username': 'admin', 'password': 'adminpass'}
+        )
         self.assertRedirects(response, reverse('home'), fetch_redirect_response=False)
+
     def test_logout_requires_post(self):
         self.client.login(username='admin', password='adminpass')
         response = self.client.get(reverse('logout'))
@@ -39,6 +50,7 @@ class AuthenticationViewTest(TestCase):
         self.client.login(username='student', password='studentpass')
         response = self.client.get(reverse('admin-dashboard'))
         self.assertEqual(response.status_code, 403)
+
     def test_unauthenticated_redirects_to_login(self):
         response = self.client.get(reverse('admin-dashboard'))
-        self.assertRedirects(response, f"{reverse('login')}?next={reverse('admin-dashboard')}")
+        self.assertRedirects(response, f'{reverse("login")}?next={reverse("admin-dashboard")}')

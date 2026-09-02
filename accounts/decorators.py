@@ -1,6 +1,8 @@
 from functools import wraps
-from django.http import HttpResponseForbidden
+
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+
 
 def role_required(roles):
     """
@@ -8,6 +10,7 @@ def role_required(roles):
     has one of the given roles. Anonymous users are redirected to login.
     Authenticated users with wrong role get 403.
     """
+
     def decorator(view_func):
         @wraps(view_func)
         @login_required
@@ -15,5 +18,7 @@ def role_required(roles):
             if request.user.role in roles:
                 return view_func(request, *args, **kwargs)
             return HttpResponseForbidden()
+
         return _wrapped_view
+
     return decorator

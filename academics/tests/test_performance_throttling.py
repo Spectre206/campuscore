@@ -1,17 +1,19 @@
+from django.contrib.auth.models import AnonymousUser
 from django.core.cache import cache
 from django.test import override_settings
-from rest_framework.test import APIRequestFactory
-from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from rest_framework import status
-from academics.tests.base import BaseAPITestSetup
+from rest_framework.test import APIRequestFactory
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
+
 from academics.models import Department
-from django.contrib.auth.models import AnonymousUser
+from academics.tests.base import BaseAPITestSetup
+
 
 @override_settings(DEBUG=True)
 class QueryCountTest(BaseAPITestSetup):
     def test_list_departments_query_count(self):
-        Department.objects.create(name="Math", code="MATH")
-        Department.objects.create(name="Physics", code="PHY")
+        Department.objects.create(name='Math', code='MATH')
+        Department.objects.create(name='Physics', code='PHY')
         self.client.force_authenticate(user=self.student)
         with self.assertNumQueries(2):
             response = self.client.get('/api/v1/departments/')

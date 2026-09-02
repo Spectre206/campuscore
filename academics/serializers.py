@@ -1,11 +1,24 @@
 from rest_framework import serializers
-from .models import Department, Program, Course, Section, Enrollment, AttendanceSession, AttendanceRecord, Assessment, Grade
+
+from .models import (
+    Assessment,
+    AttendanceRecord,
+    AttendanceSession,
+    Course,
+    Department,
+    Enrollment,
+    Grade,
+    Program,
+    Section,
+)
+
 
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
         fields = ['id', 'name', 'code']
-        
+
+
 class ProgramSerializer(serializers.ModelSerializer):
     department_name = serializers.CharField(source='department.name', read_only=True)
 
@@ -20,14 +33,24 @@ class CourseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = ['id', 'name', 'code', 'description', 'program', 'program_name']
-        
+
+
 class SectionSerializer(serializers.ModelSerializer):
     course_name = serializers.CharField(source='course.name', read_only=True)
     teacher_username = serializers.CharField(source='teacher.username', read_only=True)
 
     class Meta:
         model = Section
-        fields = ['id', 'name', 'capacity', 'is_active', 'course', 'course_name', 'teacher', 'teacher_username']
+        fields = [
+            'id',
+            'name',
+            'capacity',
+            'is_active',
+            'course',
+            'course_name',
+            'teacher',
+            'teacher_username',
+        ]
 
     def validate_teacher(self, value):
         if value.role != 'TEACHER':
@@ -41,7 +64,15 @@ class EnrollmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Enrollment
-        fields = ['id', 'section', 'section_name', 'student', 'student_username', 'status', 'enrolled_at']
+        fields = [
+            'id',
+            'section',
+            'section_name',
+            'student',
+            'student_username',
+            'status',
+            'enrolled_at',
+        ]
         read_only_fields = ['enrolled_at']
 
     def validate_student(self, value):
@@ -49,20 +80,31 @@ class EnrollmentSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Enrolled user must have role 'STUDENT'.")
         return value
 
+
 class AttendanceSessionSerializer(serializers.ModelSerializer):
     section_name = serializers.CharField(source='section.name', read_only=True)
     created_by_username = serializers.CharField(source='created_by.username', read_only=True)
 
     class Meta:
         model = AttendanceSession
-        fields = ['id', 'section', 'section_name', 'date', 'title', 'created_by', 'created_by_username']
+        fields = [
+            'id',
+            'section',
+            'section_name',
+            'date',
+            'title',
+            'created_by',
+            'created_by_username',
+        ]
 
     def validate_section(self, value):
         request = self.context.get('request')
         if request and request.user.role == request.user.Role.TEACHER:
             # Teacher can only create sessions for sections they teach
             if not Section.objects.filter(pk=value.pk, teacher=request.user).exists():
-                raise serializers.ValidationError("You can only create sessions for your own sections.")
+                raise serializers.ValidationError(
+                    'You can only create sessions for your own sections.'
+                )
         return value
 
 
@@ -72,15 +114,26 @@ class AttendanceRecordSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AttendanceRecord
-        fields = ['id', 'session', 'session_section', 'enrollment', 'student_username', 'status', 'remarks']
+        fields = [
+            'id',
+            'session',
+            'session_section',
+            'enrollment',
+            'student_username',
+            'status',
+            'remarks',
+        ]
 
     def validate(self, data):
         session = data.get('session')
         enrollment = data.get('enrollment')
         if session and enrollment:
             if enrollment.section_id != session.section_id:
-                raise serializers.ValidationError("Enrollment does not belong to the session's section.")
+                raise serializers.ValidationError(
+                    "Enrollment does not belong to the session's section."
+                )
         return data
+
 
 class AssessmentSerializer(serializers.ModelSerializer):
     section_name = serializers.CharField(source='section.name', read_only=True)
@@ -94,7 +147,9 @@ class AssessmentSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and request.user.role == request.user.Role.TEACHER:
             if not Section.objects.filter(pk=value.pk, teacher=request.user).exists():
-                raise serializers.ValidationError("You can only create assessments for your own sections.")
+                raise serializers.ValidationError(
+                    'You can only create assessments for your own sections.'
+                )
         return value
 
 
@@ -104,7 +159,15 @@ class GradeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Grade
-        fields = ['id', 'assessment', 'assessment_name', 'enrollment', 'student_username', 'marks', 'remarks']
+        fields = [
+            'id',
+            'assessment',
+            'assessment_name',
+            'enrollment',
+            'student_username',
+            'marks',
+            'remarks',
+        ]
 
     def validate(self, data):
         assessment = data.get('assessment')
@@ -113,11 +176,16 @@ class GradeSerializer(serializers.ModelSerializer):
 
         if assessment and enrollment:
             if enrollment.section_id != assessment.section_id:
-                raise serializers.ValidationError("Enrollment does not belong to the assessment's section.")
+                raise serializers.ValidationError(
+                    "Enrollment does not belong to the assessment's section."
+                )
         if assessment and marks is not None:
             if marks < 0 or marks > assessment.total_marks:
-                raise serializers.ValidationError({"marks": "Marks must be between 0 and total marks."})
+                raise serializers.ValidationError(
+                    {'marks': 'Marks must be between 0 and total marks.'}
+                )
         return data
+
 
 class AttendanceSummarySerializer(serializers.Serializer):
     section = serializers.CharField()
@@ -125,6 +193,7 @@ class AttendanceSummarySerializer(serializers.Serializer):
     total_sessions = serializers.IntegerField()
     present = serializers.IntegerField()
     percentage = serializers.FloatField()
+
 
 class GradeSummarySerializer(serializers.Serializer):
     section = serializers.CharField()

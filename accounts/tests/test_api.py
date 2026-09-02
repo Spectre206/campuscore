@@ -1,18 +1,16 @@
-from rest_framework.test import APITestCase
 from rest_framework import status
+from rest_framework.test import APITestCase
+
 from accounts.models import User
+
 
 class UserAPITest(APITestCase):
     def setUp(self):
         self.admin = User.objects.create_user(
-            username='admin',
-            password='adminpass',
-            role=User.Role.ADMIN
+            username='admin', password='adminpass', role=User.Role.ADMIN
         )
         self.student = User.objects.create_user(
-            username='student',
-            password='studentpass',
-            role=User.Role.STUDENT
+            username='student', password='studentpass', role=User.Role.STUDENT
         )
 
     def test_list_users_as_admin(self):
@@ -27,7 +25,7 @@ class UserAPITest(APITestCase):
             'username': 'newuser',
             'email': 'new@example.com',
             'role': User.Role.STUDENT,
-            'password': 'newpass123'
+            'password': 'newpass123',
         }
         response = self.client.post('/api/v1/users/', data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
