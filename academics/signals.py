@@ -31,9 +31,7 @@ def enrollment_created_notification(sender, instance, created, **kwargs):
                 f'You have been enrolled in {section.course.name} - {section.name}.\n\n'
                 'CampusCore'
             )
-            transaction.on_commit(
-                lambda: send_email_task.delay(subject, message, [student.email])
-            )
+            transaction.on_commit(lambda: send_email_task.delay(subject, message, [student.email]))
 
 
 @receiver(post_save, sender=Grade)
@@ -46,8 +44,7 @@ def grade_created_notification(sender, instance, created, **kwargs):
             recipient=student,
             title='Grade Posted',
             message=(
-                f'Your grade for {assessment.name} is '
-                f'{instance.marks}/{assessment.total_marks}.'
+                f'Your grade for {assessment.name} is {instance.marks}/{assessment.total_marks}.'
             ),
             link=reverse('student-enrollment-list'),
         )
@@ -60,6 +57,4 @@ def grade_created_notification(sender, instance, created, **kwargs):
                 f'{instance.marks}/{assessment.total_marks}.\n\n'
                 'CampusCore'
             )
-            transaction.on_commit(
-                lambda: send_email_task.delay(subject, message, [student.email])
-            )
+            transaction.on_commit(lambda: send_email_task.delay(subject, message, [student.email]))
