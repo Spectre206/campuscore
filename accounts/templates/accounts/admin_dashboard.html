@@ -2,32 +2,130 @@
 {% block title %}Admin Dashboard{% endblock %}
 {% block content %}
 <h1 class="mb-4">Admin Dashboard</h1>
-<div class="row">
-    <div class="col-md-4">
-        <div class="card text-white bg-primary mb-3">
+
+<div class="row g-3">
+    <div class="col-md-4 col-lg-2">
+        <div class="card text-white bg-primary shadow-sm h-100">
             <div class="card-body">
-                <h5 class="card-title">Departments</h5>
-                <p class="card-text">Manage academic departments.</p>
-                <a href="{% url 'department-list' %}" class="btn btn-light">View</a>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 opacity-75">Departments</h6>
+                        <h2 class="card-title mb-0">{{ total_departments }}</h2>
+                    </div>
+                    <i class="bi bi-diagram-3 fs-1 opacity-50"></i>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-success mb-3">
+    <div class="col-md-4 col-lg-2">
+        <div class="card text-white bg-success shadow-sm h-100">
             <div class="card-body">
-                <h5 class="card-title">Users</h5>
-                <p class="card-text">Manage users and roles.</p>
-                <a href="/admin/accounts/user/" class="btn btn-light">View</a>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 opacity-75">Programs</h6>
+                        <h2 class="card-title mb-0">{{ total_programs }}</h2>
+                    </div>
+                    <i class="bi bi-journal-bookmark fs-1 opacity-50"></i>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-info mb-3">
+    <div class="col-md-4 col-lg-2">
+        <div class="card text-white bg-info shadow-sm h-100">
             <div class="card-body">
-                <h5 class="card-title">Attendance</h5>
-                <p class="card-text">View attendance sessions.</p>
-                <a href="#" class="btn btn-light">Soon</a>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 opacity-75">Courses</h6>
+                        <h2 class="card-title mb-0">{{ total_courses }}</h2>
+                    </div>
+                    <i class="bi bi-book fs-1 opacity-50"></i>
+                </div>
             </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-lg-2">
+        <div class="card text-white bg-warning shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 opacity-75">Sections</h6>
+                        <h2 class="card-title mb-0">{{ total_sections }}</h2>
+                    </div>
+                    <i class="bi bi-people fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-lg-2">
+        <div class="card text-white bg-danger shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 opacity-75">Teachers</h6>
+                        <h2 class="card-title mb-0">{{ total_teachers }}</h2>
+                    </div>
+                    <i class="bi bi-person-badge fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-lg-2">
+        <div class="card text-white bg-secondary shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 opacity-75">Students</h6>
+                        <h2 class="card-title mb-0">{{ total_students }}</h2>
+                    </div>
+                    <i class="bi bi-mortarboard fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{% url 'department-list-page' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Manage Departments <i class="bi bi-chevron-right"></i>
+                    </a>
+                    <a href="/admin/accounts/user/" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Manage Users <i class="bi bi-chevron-right"></i>
+                    </a>
+                    <a href="/admin/academics/section/" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        Manage Sections <i class="bi bi-chevron-right"></i>
+                    </a>
+                    <a href="{% url 'swagger-ui' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        API Docs <i class="bi bi-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Recent Notifications</h5>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for notification in recent_notifications %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ notification.title }}</strong><br>
+                        <small class="text-muted">{{ notification.created_at|timesince }} ago</small>
+                    </div>
+                    <a href="{% url 'notification-detail' notification.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">No notifications.</li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
 </div>

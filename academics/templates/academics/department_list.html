@@ -6,7 +6,7 @@
     <div class="d-flex gap-2 align-items-center">
         <input type="search" name="q" value="{{ query }}" placeholder="Search name or code..."
                class="form-control"
-               hx-get="{% url 'department-list' %}"
+               hx-get="{% url 'department-list-page' %}"
                hx-target="#department-table"
                hx-trigger="keyup changed delay:500ms"
                hx-push-url="true">

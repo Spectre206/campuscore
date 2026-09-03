@@ -17,14 +17,16 @@
 
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+    {% block extra_css %}{% endblock %}
 </head>
 <body class="d-flex flex-column min-vh-100">
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--bs-navbar-bg);">
-        <div class="container-fluid">
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm" style="background-color: var(--bs-navbar-bg);">
+        <div class="container-xxl py-2">
             <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'home' %}">
                 <i class="bi bi-mortarboard-fill" style="color: #C99A2E;"></i>
-                CampusCore
+                <span class="fw-bold">CampusCore</span>
             </a>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
@@ -35,28 +37,27 @@
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     {% if user.is_authenticated %}
                         {% if user.role == 'ADMIN' %}
-                            <li class="nav-item"><a class="nav-link" href="{% url 'department-list' %}">Departments</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/admin/">Admin</a></li>
+                            <li class="nav-item"><a class="nav-link" href="{% url 'department-list-page' %}">Departments</a></li>
+                            <li class="nav-item"><a class="nav-link" href="/admin/">Admin Panel</a></li>
                         {% elif user.role == 'TEACHER' %}
                             <li class="nav-item"><a class="nav-link" href="{% url 'teacher-section-list' %}">My Sections</a></li>
-                            <li class="nav-item"><a class="nav-link" href="#">Attendance</a></li>
-                            <li class="nav-item"><a class="nav-link" href="#">Assessments</a></li>
+                            <li class="nav-item"><a class="nav-link" href="{% url 'ai-quiz-generator' %}">AI Quiz</a></li>
                         {% elif user.role == 'STUDENT' %}
                             <li class="nav-item"><a class="nav-link" href="{% url 'student-enrollment-list' %}">My Enrollments</a></li>
-                            <li class="nav-item"><a class="nav-link" href="#">Attendance</a></li>
-                            <li class="nav-item"><a class="nav-link" href="#">Grades</a></li>
+                            <li class="nav-item"><a class="nav-link" href="{% url 'student-attendance-summary' %}">Attendance</a></li>
+                            <li class="nav-item"><a class="nav-link" href="{% url 'student-grade-summary' %}">Grades</a></li>
                         {% endif %}
                     {% endif %}
                 </ul>
 
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
                     {% if user.is_authenticated %}
                         <li class="nav-item me-2">
                             {% include "notifications/partials/unread_badge.html" %}
                         </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                                {{ user.username }} ({{ user.get_role_display }})
+                                <i class="bi bi-person-circle me-1"></i>{{ user.username }} ({{ user.get_role_display }})
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" href="#">Profile</a></li>
@@ -78,7 +79,7 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="container my-4 flex-grow-1">
+    <main class="container-xxl my-4 flex-grow-1">
         {% if messages %}
             <div class="mb-3">
                 {% for message in messages %}
@@ -95,9 +96,31 @@
     </main>
 
     <!-- Footer -->
-    <footer class="py-3 bg-light text-center text-muted">
-        <div class="container">
-            <span>CampusCore v0.8</span>
+    <footer class="bg-dark text-white pt-5 pb-4 mt-auto">
+        <div class="container-xxl">
+            <div class="row gy-4">
+                <div class="col-lg-4">
+                    <h5 class="text-warning d-flex align-items-center gap-2">
+                        <i class="bi bi-mortarboard-fill"></i> CampusCore
+                    </h5>
+                    <p class="text-muted mb-0">
+                        A modern AI-powered education management platform built with Django, PostgreSQL, and Celery.
+                    </p>
+                </div>
+                <div class="col-lg-4">
+                    <h6 class="text-uppercase text-muted mb-3">Quick Links</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="{% url 'swagger-ui' %}" class="text-decoration-none text-white-50">API Documentation</a></li>
+                        <li><a href="{% url 'schema' %}" class="text-decoration-none text-white-50">OpenAPI Schema</a></li>
+                        <li><a href="{% url 'admin:index' %}" class="text-decoration-none text-white-50">Admin Panel</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-4">
+                    <h6 class="text-uppercase text-muted mb-3">Status</h6>
+                    <p class="text-muted mb-0">v1.0 (Development)</p>
+                    <p class="text-muted mb-0">© {% now "Y" %} CampusCore</p>
+                </div>
+            </div>
         </div>
     </footer>
 
