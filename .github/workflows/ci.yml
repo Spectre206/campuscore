@@ -30,6 +30,8 @@ jobs:
           POSTGRES_DB: campuscore
           POSTGRES_USER: campuscore
           POSTGRES_PASSWORD: campuscore
+          GROQ_API_KEY: dummy-key-for-tests
+          AI_PROVIDER: mock
         ports:
           - 5432:5432
         options: >-
