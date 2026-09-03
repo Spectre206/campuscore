@@ -1,7 +1,8 @@
 from django.test import SimpleTestCase
+
+from ai_service.providers.base import AIProvider
 from ai_service.providers.mock import MockAIProvider
 from ai_service.service import generate_quiz_questions, get_provider
-from ai_service.providers.base import AIProvider
 
 
 class MockAIProviderTest(SimpleTestCase):

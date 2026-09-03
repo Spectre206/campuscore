@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
+
 from accounts.models import User
 
 
@@ -25,9 +26,7 @@ class QuizGeneratorViewTest(TestCase):
 
     def test_unauthenticated_redirected(self):
         response = self.client.get(reverse('ai-quiz-generator'))
-        self.assertRedirects(
-            response, f"{reverse('login')}?next={reverse('ai-quiz-generator')}"
-        )
+        self.assertRedirects(response, f'{reverse("login")}?next={reverse("ai-quiz-generator")}')
 
     def test_teacher_post_generates_questions(self):
         self.client.login(username='teacher', password='pass123')

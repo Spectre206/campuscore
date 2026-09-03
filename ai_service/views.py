@@ -1,5 +1,5 @@
-from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
 
 from accounts.decorators import role_required
 from accounts.models import User

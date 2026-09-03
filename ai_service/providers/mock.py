@@ -8,7 +8,7 @@ class MockAIProvider(AIProvider):
             questions.append(
                 {
                     'type': 'multiple_choice',
-                    'question': f'Sample question {i+1} about {topic}?',
+                    'question': f'Sample question {i + 1} about {topic}?',
                     'options': ['Option A', 'Option B', 'Option C', 'Option D'],
                     'answer': 'Option A',
                 }
