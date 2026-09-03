@@ -32,7 +32,7 @@ router.register(r'api/v1/grades', GradeViewSet, basename='grade')
 
 urlpatterns = [
     # Web views
-    path('departments/', views.department_list, name='department-list'),
+    path('departments/', views.department_list, name='department-list-page'),
     path('my-sections/', views.teacher_section_list, name='teacher-section-list'),
     path('my-enrollments/', views.student_enrollment_list, name='student-enrollment-list'),
     path(

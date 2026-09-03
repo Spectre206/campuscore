@@ -2,32 +2,81 @@
 {% block title %}Teacher Dashboard{% endblock %}
 {% block content %}
 <h1 class="mb-4">Teacher Dashboard</h1>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 opacity-75">My Sections</h6>
+                        <h2 class="card-title mb-0">{{ sections_count }}</h2>
+                    </div>
+                    <i class="bi bi-people fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 opacity-75">Upcoming Sessions</h6>
+                        <h2 class="card-title mb-0">{{ upcoming_sessions.count }}</h2>
+                    </div>
+                    <i class="bi bi-calendar-check fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 opacity-75">Recent Assessments</h6>
+                        <h2 class="card-title mb-0">{{ recent_assessments.count }}</h2>
+                    </div>
+                    <i class="bi bi-clipboard-data fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
-    <div class="col-md-4">
-        <div class="card text-white bg-primary mb-3">
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
             <div class="card-body">
-                <h5 class="card-title">My Sections</h5>
-                <p class="card-text">View your assigned sections.</p>
-                <a href="{% url 'teacher-section-list' %}" class="btn btn-light">View</a>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'teacher-section-list' %}" class="btn btn-outline-primary">My Sections</a>
+                    <a href="{% url 'ai-quiz-generator' %}" class="btn btn-outline-success">AI Quiz Generator</a>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-success mb-3">
-            <div class="card-body">
-                <h5 class="card-title">Attendance</h5>
-                <p class="card-text">Mark attendance for your sections.</p>
-                <a href="#" class="btn btn-light">Soon</a>
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Upcoming Sessions</h5>
             </div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-info mb-3">
-            <div class="card-body">
-                <h5 class="card-title">Assessments</h5>
-                <p class="card-text">Create assessments and grade.</p>
-                <a href="#" class="btn btn-light">Soon</a>
-            </div>
+            <ul class="list-group list-group-flush">
+                {% for session in upcoming_sessions %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ session.section.course.code }} - {{ session.section.name }}</strong><br>
+                        <small class="text-muted">{{ session.date|date:"M d, Y" }}</small>
+                    </div>
+                    <a href="{% url 'attendance-mark' session.id %}" class="btn btn-sm btn-primary">Mark</a>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">No upcoming sessions.</li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
 </div>
