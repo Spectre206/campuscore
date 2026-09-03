@@ -14,11 +14,11 @@ urlpatterns = [
     path('', include('academics.urls')),
     path('accounts/', include('accounts.urls')),
     path('notifications/', include('notifications.urls')),
+    path('ai/', include('ai_service.urls')),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
     path('api/v1/auth/token/', auth_token_views.obtain_auth_token, name='api-token-auth'),
-    path('ai/', include('ai_service.urls')),
 ]
 
 urlpatterns += router.urls
