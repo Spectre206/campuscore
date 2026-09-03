@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Enter Grades - {{ assessment.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Enter Grades</h1>
+    <a href="{% url 'section-assessment-list' section.id %}" class="btn btn-outline-secondary">Back</a>
+</div>
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h5 class="card-title">{{ assessment.name }} ({{ assessment.get_type_display }})</h5>
+        <p class="text-muted">Total marks: {{ assessment.total_marks }} | Date: {{ assessment.date|date:"M d, Y" }}</p>
+        <p class="text-muted">{{ section.course.code }} - {{ section.name }}</p>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ formset.management_form }}
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Marks</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for form, enrollment in form_enrollment_pairs %}
+                    <tr>
+                        <td>{{ enrollment.student.username }}</td>
+                        <td>
+                            {{ form.id }}
+                            {{ form.marks }}
+                            {% if form.marks.errors %}<div class="text-danger small">{{ form.marks.errors }}</div>{% endif %}
+                        </td>
+                        <td>
+                            {{ form.remarks }}
+                            {% if form.remarks.errors %}<div class="text-danger small">{{ form.remarks.errors }}</div>{% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center text-muted">No active enrollments.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <button type="submit" class="btn btn-primary">Save Grades</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

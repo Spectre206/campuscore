@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}My Grades{% endblock %}
+{% block content %}
+<h1 class="mb-4">My Grade Summary</h1>
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if summary %}
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Section</th>
+                    <th>Course</th>
+                    <th>Assessments</th>
+                    <th>Marks Obtained</th>
+                    <th>Total Possible</th>
+                    <th>Percentage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in summary %}
+                <tr>
+                    <td>{{ item.section.name }}</td>
+                    <td>{{ item.course_code }}</td>
+                    <td>{{ item.assessments_count }}</td>
+                    <td>{{ item.total_obtained }}</td>
+                    <td>{{ item.total_possible }}</td>
+                    <td>
+                        <span class="badge {% if item.percentage >= 75 %}bg-success{% elif item.percentage >= 50 %}bg-warning{% else %}bg-danger{% endif %}">
+                            {{ item.percentage }}%
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted text-center mb-0">No active enrollments.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
