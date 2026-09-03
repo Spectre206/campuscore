@@ -30,8 +30,7 @@ jobs:
           POSTGRES_DB: campuscore
           POSTGRES_USER: campuscore
           POSTGRES_PASSWORD: campuscore
-          GROQ_API_KEY: dummy-key-for-tests
-          AI_PROVIDER: mock
+          
         ports:
           - 5432:5432
         options: >-
@@ -58,6 +57,8 @@ jobs:
       DB_PORT: 5432
       CELERY_BROKER_URL: redis://localhost:6379/0
       CELERY_RESULT_BACKEND: redis://localhost:6379/0
+      GROQ_API_KEY: dummy-key-for-tests
+      AI_PROVIDER: mock
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
