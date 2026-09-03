@@ -27,30 +27,17 @@
       </div>
     </div>
 
-    {% if questions %}
-      <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-          Generated Questions
-        </div>
-        <ul class="list-group list-group-flush">
-          {% for q in questions %}
-            <li class="list-group-item">
-              <strong>{{ forloop.counter }}. {{ q.question }}</strong>
-              <div class="ms-4 mt-2">
-                {% if q.options %}
-                  <div class="small text-muted">Options:</div>
-                  <ul class="list-unstyled ms-3">
-                    {% for opt in q.options %}
-                      <li>{{ opt }}</li>
-                    {% endfor %}
-                  </ul>
-                {% endif %}
-                <div class="small"><em>Answer: {{ q.answer }}</em></div>
-              </div>
-            </li>
-          {% endfor %}
-        </ul>
+    {% if task_id and not questions %}
+    <div id="quiz-result" hx-get="{% url 'quiz-result-partial' %}" hx-trigger="load, every 2s" hx-swap="outerHTML">
+      <div class="alert alert-info d-flex align-items-center gap-2">
+        <span class="spinner-border spinner-border-sm" role="status"></span>
+          Generating questions...
       </div>
+    </div>
+    {% endif %}
+
+    {% if questions %}
+      {% include "ai_service/partials/quiz_questions.html" %}
     {% endif %}
   </div>
 </div>

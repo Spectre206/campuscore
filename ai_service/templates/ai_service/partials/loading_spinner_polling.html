@@ -1,0 +1,6 @@
+<div id="quiz-result" hx-get="{% url 'quiz-result-partial' %}" hx-trigger="load, every 2s" hx-swap="outerHTML">
+    <div class="alert alert-info d-flex align-items-center gap-2">
+        <span class="spinner-border spinner-border-sm" role="status"></span>
+        Generating questions...
+    </div>
+</div>
