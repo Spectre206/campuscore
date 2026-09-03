@@ -35,6 +35,20 @@ urlpatterns = [
     path('departments/', views.department_list, name='department-list'),
     path('my-sections/', views.teacher_section_list, name='teacher-section-list'),
     path('my-enrollments/', views.student_enrollment_list, name='student-enrollment-list'),
+    path(
+        'sections/<int:section_id>/attendance/',
+        views.section_attendance_sessions,
+        name='section-attendance-session-list',
+    ),
+    path(
+        'sections/<int:section_id>/attendance/create/',
+        views.attendance_session_create,
+        name='section-attendance-session-create',
+    ),
+    path(
+        'attendance-sessions/<int:session_id>/mark/', views.attendance_mark, name='attendance-mark'
+    ),
+    path('my-attendance/', views.student_attendance_summary, name='student-attendance-summary'),
     # Custom API endpoints (non-ViewSet)
     path(
         'api/v1/attendance-summary/',
