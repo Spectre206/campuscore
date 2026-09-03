@@ -24,9 +24,8 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{% url 'section-attendance-session-list' section.id %}" class="btn btn-sm btn-outline-primary">
-                                Attendance
-                            </a>
+                            <a href="{% url 'section-attendance-session-list' section.id %}" class="btn btn-sm btn-outline-primary me-1">Attendance</a>
+                            <a href="{% url 'section-assessment-list' section.id %}" class="btn btn-sm btn-outline-secondary">Assessments</a>
                         </td>
                     </tr>
                 {% empty %}

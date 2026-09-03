@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Assessments - {{ section.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Assessments: {{ section.course.code }} - {{ section.name }}</h1>
+    <a href="{% url 'assessment-create' section.id %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> New Assessment
+    </a>
+</div>
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if assessments %}
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Total Marks</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for assessment in assessments %}
+                <tr>
+                    <td>{{ assessment.name }}</td>
+                    <td>{{ assessment.get_type_display }}</td>
+                    <td>{{ assessment.total_marks }}</td>
+                    <td>{{ assessment.date|date:"M d, Y" }}</td>
+                    <td>
+                        <a href="{% url 'assessment-grade-entry' assessment.id %}" class="btn btn-sm btn-outline-primary">Enter Grades</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No assessments yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted text-center mb-0">No assessments for this section yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
