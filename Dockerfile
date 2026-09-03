@@ -19,6 +19,7 @@ WORKDIR /app
 
 # Copy requirements and install
 COPY requirements.txt /app/
+RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 # Copy project
