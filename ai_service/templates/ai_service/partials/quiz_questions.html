@@ -1,0 +1,23 @@
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        Generated Questions
+    </div>
+    <ul class="list-group list-group-flush">
+        {% for q in questions %}
+        <li class="list-group-item">
+            <strong>{{ forloop.counter }}. {{ q.question }}</strong>
+            <div class="ms-4 mt-2">
+                {% if q.options %}
+                <div class="small text-muted">Options:</div>
+                <ul class="list-unstyled ms-3">
+                    {% for opt in q.options %}
+                    <li>{{ opt }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                <div class="small"><em>Answer: {{ q.answer }}</em></div>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
