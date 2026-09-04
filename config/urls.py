@@ -4,6 +4,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, Spec
 from rest_framework.authtoken import views as auth_token_views
 from rest_framework.routers import DefaultRouter
 
+from accounts import views as accounts_views
 from accounts.api_views import UserViewSet
 
 from .views import health_check
@@ -12,6 +13,7 @@ router = DefaultRouter()
 router.register(r'api/v1/users', UserViewSet, basename='user')
 
 urlpatterns = [
+    path('', accounts_views.landing, name='landing'),
     path('admin/', admin.site.urls),
     path('', include('academics.urls')),
     path('accounts/', include('accounts.urls')),

@@ -92,3 +92,9 @@ def student_dashboard(request):
         'recent_grades': recent_grades,
     }
     return render(request, 'accounts/student_dashboard.html', context)
+
+
+def landing(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+    return render(request, 'landing.html')
