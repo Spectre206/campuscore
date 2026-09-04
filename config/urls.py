@@ -6,6 +6,8 @@ from rest_framework.routers import DefaultRouter
 
 from accounts.api_views import UserViewSet
 
+from .views import health_check
+
 router = DefaultRouter()
 router.register(r'api/v1/users', UserViewSet, basename='user')
 
@@ -15,6 +17,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('notifications/', include('notifications.urls')),
     path('ai/', include('ai_service.urls')),
+    path('health/', health_check, name='health-check'),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
