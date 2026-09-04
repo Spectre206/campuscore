@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Welcome to CampusCore{% endblock %}
+{% block content %}
+<div class="px-4 py-5 my-5 text-center">
+    <i class="bi bi-mortarboard-fill display-1 text-primary"></i>
+    <h1 class="display-5 fw-bold">CampusCore</h1>
+    <div class="col-lg-6 mx-auto">
+        <p class="lead mb-4">
+            A modern AI-powered education management platform to streamline academics, attendance, assessments, and communication.
+        </p>
+        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+            <a href="{% url 'login' %}" class="btn btn-primary btn-lg px-4 gap-3">Login</a>
+            <a href="{% url 'swagger-ui' %}" class="btn btn-outline-secondary btn-lg px-4">API Docs</a>
+        </div>
+    </div>
+</div>
+
+<div class="container px-4 py-5">
+    <div class="row g-4 py-5 row-cols-1 row-cols-lg-3">
+        <div class="col d-flex align-items-start">
+            <div class="icon-square text-bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
+                <i class="bi bi-diagram-3"></i>
+            </div>
+            <div>
+                <h3 class="fs-2">Academic Structure</h3>
+                <p>Manage departments, programs, courses, and sections with ease.</p>
+            </div>
+        </div>
+        <div class="col d-flex align-items-start">
+            <div class="icon-square text-bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
+                <i class="bi bi-calendar-check"></i>
+            </div>
+            <div>
+                <h3 class="fs-2">Attendance Tracking</h3>
+                <p>Record and view attendance with simple, role-based workflows.</p>
+            </div>
+        </div>
+        <div class="col d-flex align-items-start">
+            <div class="icon-square text-bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
+                <i class="bi bi-clipboard-data"></i>
+            </div>
+            <div>
+                <h3 class="fs-2">Assessments & Grades</h3>
+                <p>Create assessments, enter grades, and view performance summaries.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

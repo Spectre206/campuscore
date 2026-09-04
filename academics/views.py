@@ -140,14 +140,20 @@ def attendance_mark(request, session_id):
     AttendanceRecordFormSet = modelformset_factory(
         AttendanceRecord,
         fields=['status', 'remarks'],
-        extra=0,
+        extra=len(enrollments),
     )
 
     if request.method == 'POST':
         formset = AttendanceRecordFormSet(request.POST)
+
+        # Bind each form to its enrollment and session BEFORE validation
+        for form, enrollment in zip(formset.forms, enrollments):
+            form.instance.session = session
+            form.instance.enrollment = enrollment
+
         if formset.is_valid():
-            for form, enrollment in zip(formset, enrollments):
-                status = form.cleaned_data.get('status')
+            for form, enrollment in zip(formset.forms, enrollments):
+                status = form.cleaned_data.get('status') or AttendanceRecord.Status.PRESENT
                 remarks = form.cleaned_data.get('remarks', '')
                 AttendanceRecord.objects.update_or_create(
                     session=session,
@@ -173,7 +179,12 @@ def attendance_mark(request, session_id):
             initial=initial_data,
         )
 
-    form_enrollment_pairs = zip(formset, enrollments)
+    # For GET, also bind relationships for template rendering
+    for form, enrollment in zip(formset.forms, enrollments):
+        form.instance.session = session
+        form.instance.enrollment = enrollment
+
+    form_enrollment_pairs = zip(formset.forms, enrollments)
     context = {
         'session': session,
         'section': section,
@@ -261,18 +272,22 @@ def grade_entry(request, assessment_id):
     GradeFormSet = modelformset_factory(
         Grade,
         fields=['marks', 'remarks'],
-        extra=0,
+        extra=len(enrollments),
     )
 
     if request.method == 'POST':
         formset = GradeFormSet(request.POST)
+
+        # Bind each form to its enrollment and assessment BEFORE validation
+        for form, enrollment in zip(formset.forms, enrollments):
+            form.instance.assessment = assessment
+            form.instance.enrollment = enrollment
+
         if formset.is_valid():
-            for form, enrollment in zip(formset, enrollments):
+            for form, enrollment in zip(formset.forms, enrollments):
                 marks = form.cleaned_data.get('marks')
                 remarks = form.cleaned_data.get('remarks', '')
-                # Validate marks range
                 if marks is not None and (marks < 0 or marks > assessment.total_marks):
-                    # Add error to form
                     form.add_error(
                         'marks', f'Marks must be between 0 and {assessment.total_marks}.'
                     )
@@ -282,7 +297,6 @@ def grade_entry(request, assessment_id):
                     enrollment=enrollment,
                     defaults={'marks': marks, 'remarks': remarks},
                 )
-            # If no errors after loop, redirect
             if not any(form.errors for form in formset):
                 return redirect('section-assessment-list', section_id=section.id)
     else:
@@ -300,7 +314,12 @@ def grade_entry(request, assessment_id):
             initial=initial_data,
         )
 
-    form_enrollment_pairs = zip(formset, enrollments)
+    # For GET, also bind relationships for template rendering
+    for form, enrollment in zip(formset.forms, enrollments):
+        form.instance.assessment = assessment
+        form.instance.enrollment = enrollment
+
+    form_enrollment_pairs = zip(formset.forms, enrollments)
     context = {
         'assessment': assessment,
         'section': section,
