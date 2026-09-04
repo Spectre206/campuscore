@@ -78,10 +78,9 @@ class EnrollmentViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = Enrollment.objects.select_related('section', 'student')
-        if user.role == user.Role.STUDENT:
-            queryset = queryset.filter(student=user)
-        return queryset
+        if hasattr(user, 'role') and user.role == user.Role.STUDENT:
+            return Enrollment.objects.filter(student=user)
+        return Enrollment.objects.all()
 
     def perform_create(self, serializer):
         section = serializer.validated_data['section']
@@ -108,10 +107,9 @@ class AttendanceSessionViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = AttendanceSession.objects.select_related('section', 'created_by')
-        if user.role == user.Role.TEACHER:
-            queryset = queryset.filter(section__teacher=user)
-        return queryset
+        if hasattr(user, 'role') and user.role == user.Role.TEACHER:
+            return AttendanceSession.objects.filter(section__teacher=user)
+        return AttendanceSession.objects.all()
 
 
 class AttendanceRecordViewSet(ModelViewSet):
@@ -122,12 +120,9 @@ class AttendanceRecordViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = AttendanceRecord.objects.select_related(
-            'session__section', 'enrollment__student'
-        )
-        if user.role == user.Role.TEACHER:
-            queryset = queryset.filter(session__section__teacher=user)
-        return queryset
+        if hasattr(user, 'role') and user.role == user.Role.TEACHER:
+            return AttendanceRecord.objects.filter(session__section__teacher=user)
+        return AttendanceRecord.objects.all()
 
     def create(self, request, *args, **kwargs):
         many = isinstance(request.data, list)
@@ -150,10 +145,9 @@ class AssessmentViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = Assessment.objects.select_related('section')
-        if user.role == user.Role.TEACHER:
-            queryset = queryset.filter(section__teacher=user)
-        return queryset
+        if hasattr(user, 'role') and user.role == user.Role.TEACHER:
+            return Assessment.objects.filter(section__teacher=user)
+        return Assessment.objects.all()
 
 
 class GradeViewSet(ModelViewSet):
@@ -164,10 +158,9 @@ class GradeViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = Grade.objects.select_related('assessment', 'enrollment__student')
-        if user.role == user.Role.TEACHER:
-            queryset = queryset.filter(assessment__section__teacher=user)
-        return queryset
+        if hasattr(user, 'role') and user.role == user.Role.TEACHER:
+            return Grade.objects.filter(assessment__section__teacher=user)
+        return Grade.objects.all()
 
     def create(self, request, *args, **kwargs):
         many = isinstance(request.data, list)
